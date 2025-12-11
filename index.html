@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHENAY ILERI | Makeup Artist & AI Beauty Consultant</title>
+    <meta name="description" content="Professional makeup artist portfolio, bridal beauty services, and AI-powered face analysis application by Shenay Ileri.">
+    
+    <!-- Open Graph / Facebook / Instagram -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shenayileri.com/">
+    <meta property="og:title" content="SHENAY ILERI | Reveal Your True Beauty">
+    <meta property="og:description" content="Professional makeup artistry meets Artificial Intelligence. Book your appointment or get a personalized AI face analysis.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1596436570226-f78a87383637?q=80&w=2074&auto=format&fit=crop">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://shenayileri.com/">
+    <meta property="twitter:title" content="SHENAY ILERI | Makeup Artist">
+    <meta property="twitter:description" content="Professional makeup artistry meets Artificial Intelligence.">
+    <meta property="twitter:image" content="https://images.unsplash.com/photo-1596436570226-f78a87383637?q=80&w=2074&auto=format&fit=crop">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['"Lato"', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                gold: '#D4AF37',
+                goldHover: '#B5952F',
+                rose: '#F4C2C2',
+                dark: '#1A1A1A',
+                light: '#FAFAFA'
+              }
+            },
+            backgroundImage: {
+              'makeup-pattern': "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23D4AF37' fill-opacity='0.05' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")",
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Lato', sans-serif;
+        background-color: #FAFAFA;
+        color: #1A1A1A;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', serif;
+      }
+      .gold-text-shadow {
+        text-shadow: 2px 2px 4px rgba(212, 175, 55, 0.3);
+      }
+      /* Custom Scrollbar for Admin Panel */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ccc; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #D4AF37; 
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@19.2.1",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@19.2.1/client",
+    "react/jsx-runtime": "https://aistudiocdn.com/react@19.2.1/jsx-runtime",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@1.32.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@0.556.0",
+    "firebase/app": "https://aistudiocdn.com/firebase@12.6.0/app",
+    "firebase/database": "https://aistudiocdn.com/firebase@12.6.0/database",
+    "firebase/firestore": "https://aistudiocdn.com/firebase@12.6.0/firestore",
+    "firebase/auth": "https://aistudiocdn.com/firebase@12.6.0/auth",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
+    "react/": "https://esm.sh/react@^19.2.1/",
+    "firebase/": "https://esm.sh/firebase@^12.6.0/"
+  }
+}
+</script>
+
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
