@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment } from '../types';
 import { AdminLogin } from './AdminLogin';
-import { storageService, saveSiteTitleToFirestore, subscribeToSiteTitle } from '../services/storageService';
+import { storageService, saveSiteTitleToFirestore } from '../services/storageService';
 import { auth } from '../firebase'; // Import auth to check user status directly
 
 interface AdminDashboardProps {
@@ -82,21 +82,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
 
   // Drag and Drop State for Products
   const [dragOverId, setDragOverId] = useState<number | null>(null);
-
-  // Real-time Firestore Listener for Site Title
-  useEffect(() => {
-    if (isAuthenticated) {
-        const unsubscribe = subscribeToSiteTitle((title) => {
-            if (title) {
-                setSiteConfig(prev => ({ ...prev, siteTitle: title }));
-                // Update manual input if it's not currently being edited by THIS user to avoid overwriting typing?
-                // For simplicity and to ensure sync, we update it.
-                setManualSiteTitle(title);
-            }
-        });
-        return () => unsubscribe();
-    }
-  }, [isAuthenticated, setSiteConfig]);
 
   // Responsive Check
   useEffect(() => {

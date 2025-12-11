@@ -6,7 +6,7 @@ import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSec
 import { MakeupAnalyzer } from './components/MakeupAnalyzer';
 import { CartDrawer } from './components/CartDrawer';
 import { PaymentModal } from './components/PaymentModal';
-import { storageService, getSiteTitleFromFirestore } from './services/storageService';
+import { storageService, subscribeToSiteTitle } from './services/storageService';
 import { authService } from './services/authService';
 import { Menu, Globe, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Video } from 'lucide-react';
 
@@ -68,8 +68,7 @@ const App = () => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_CONFIG);
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [isTitleLoaded, setIsTitleLoaded] = useState(false);
-  const isRemoteUpdate = useRef(false);
-
+  
   // Authentication Listener
   useEffect(() => {
     const unsubscribe = authService.observeAuth(async (status, user) => {
@@ -78,39 +77,27 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch Firestore Title on Mount
+  // --- REAL-TIME LISTENERS ---
+
+  // 1. Listen for Site Title (Firestore)
   useEffect(() => {
-    const fetchTitle = async () => {
-        try {
-            const title = await getSiteTitleFromFirestore();
-            if (title) {
-                setSiteConfig(prev => ({ ...prev, siteTitle: title }));
-            }
-        } catch (e) {
-            console.error("Title fetch failed", e);
-        } finally {
-            setIsTitleLoaded(true);
+    const unsubscribe = subscribeToSiteTitle((title) => {
+        if (title) {
+            setSiteConfig(prev => ({ ...prev, siteTitle: title }));
         }
-    };
-    fetchTitle();
+        setIsTitleLoaded(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Logout Wrapper
-  const handleLogout = async () => {
-      await authService.logout();
-      setIsAuthenticated(false);
-      setView('home'); 
-  };
-
-  // Load configuration from Realtime DB
+  // 2. Listen for Site Config - Images, Products, Texts (Realtime DB)
   useEffect(() => {
     const unsubscribe = storageService.subscribe((data) => {
       if (data) {
-        isRemoteUpdate.current = true;
         setSiteConfig(prev => ({
           ...INITIAL_CONFIG, 
           ...data,
-          // If we have a Firestore title loaded, prioritize it over Realtime DB title
+          // Firestore'dan gelen başlık (prev.siteTitle) her zaman önceliklidir.
           siteTitle: prev.siteTitle || data.siteTitle || ""
         }));
       }
@@ -122,20 +109,12 @@ const App = () => {
     };
   }, []);
 
-  // Save configuration to Storage Service when it changes
-  useEffect(() => {
-    if (!isConfigLoaded) return;
-    if (isRemoteUpdate.current) {
-      isRemoteUpdate.current = false;
-      return;
-    }
-    if (isAuthenticated) {
-       const timeoutId = setTimeout(() => {
-          storageService.save(siteConfig);
-       }, 500);
-       return () => clearTimeout(timeoutId);
-    }
-  }, [siteConfig, isAuthenticated, isConfigLoaded]);
+  // Logout Wrapper
+  const handleLogout = async () => {
+      await authService.logout();
+      setIsAuthenticated(false);
+      setView('home'); 
+  };
 
   // Handle translations updates based on language selection
   useEffect(() => {
@@ -206,7 +185,8 @@ const App = () => {
       });
       const newConfig = { ...siteConfig, orders: updatedOrders, products: updatedProducts };
       setSiteConfig(newConfig); 
-      if (!isAuthenticated) { storageService.save(newConfig); }
+      // Siparişler her zaman kaydedilir
+      storageService.save(newConfig);
       setShowSuccessModal(true); setCart([]); setIsCartPaymentOpen(false); setTempCustomerDetails(null);
   };
   const handleRateProduct = (id: number, rating: number) => {
@@ -220,20 +200,27 @@ const App = () => {
         return p;
       })
     });
-    if (!isAuthenticated) { const newConfig = newConfigUpdater(siteConfig); setSiteConfig(newConfig); storageService.save(newConfig); } else { setSiteConfig(newConfigUpdater); }
+    // Oylama anlık olarak kaydedilir
+    const newConfig = newConfigUpdater(siteConfig);
+    setSiteConfig(newConfig); 
+    storageService.save(newConfig); 
   };
   const handleReturnRequest = (request: ReturnRequest) => {
       const order = siteConfig.orders.find(o => o.id === request.orderId);
       if (order && order.customer.email === request.email) {
           const newConfigUpdater = (prev: SiteConfig) => ({ ...prev, orders: prev.orders.map(o => o.id === request.orderId ? { ...o, status: 'return_requested' as const } : o) });
-          if (!isAuthenticated) { const newConfig = newConfigUpdater(siteConfig); setSiteConfig(newConfig); storageService.save(newConfig); } else { setSiteConfig(newConfigUpdater); }
+          const newConfig = newConfigUpdater(siteConfig);
+          setSiteConfig(newConfig); 
+          storageService.save(newConfig);
           alert("İade talebiniz başarıyla alındı.");
       } else { alert("Hata: Sipariş numarası veya e-posta adresi eşleşmiyor."); }
   };
   const handleBooking = (appointmentData: Omit<Appointment, 'id' | 'status' | 'createdAt'>) => {
     const newAppointment: Appointment = { ...appointmentData, id: Date.now(), status: 'pending', createdAt: new Date().toISOString().split('T')[0] };
     const newConfigUpdater = (prev: SiteConfig) => ({ ...prev, appointments: [newAppointment, ...(prev.appointments || [])] });
-    if (!isAuthenticated) { const newConfig = newConfigUpdater(siteConfig); setSiteConfig(newConfig); storageService.save(newConfig); } else { setSiteConfig(newConfigUpdater); }
+    const newConfig = newConfigUpdater(siteConfig);
+    setSiteConfig(newConfig); 
+    storageService.save(newConfig);
     return true; 
   };
   const handleServiceClick = (id: number) => { setSelectedServiceId(id); setView('service-detail'); window.scrollTo(0, 0); };
