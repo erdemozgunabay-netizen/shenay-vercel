@@ -1,6 +1,6 @@
 import { SiteConfig } from '../types';
 import { ref, set, get, child, onValue } from 'firebase/database';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db, rtdb, auth } from '../firebase'; // Centralized instances
 
 const LOCAL_STORAGE_KEY = 'shenay_site_config_v9';
@@ -40,8 +40,6 @@ export const getSiteTitleFromFirestore = async (): Promise<string | null> => {
       return null;
     }
   } catch (error: any) {
-    // Permission denied hatasını veya diğer erişim hatalarını yakala ve sessizce null dön.
-    // Bu sayede uygulama çökmez ve varsayılan başlığı kullanır.
     if (error.code === 'permission-denied' || error.message?.includes('Missing or insufficient permissions')) {
         console.warn("Firestore: Erişim kısıtlı (Permission Denied). Varsayılan başlık kullanılıyor.");
         return null;
@@ -49,6 +47,29 @@ export const getSiteTitleFromFirestore = async (): Promise<string | null> => {
     console.warn("Firestore Okuma Uyarısı:", error.message);
     return null;
   }
+};
+
+// Real-time Listener for Site Title
+export const subscribeToSiteTitle = (callback: (title: string | null) => void) => {
+  if (!db) return () => {};
+
+  const docRef = doc(db, "settings", "siteTitle");
+  
+  const unsubscribe = onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      callback(data.value);
+    } else {
+      callback(null);
+    }
+  }, (error) => {
+    // Permission denied hatalarını sessizce yakala (Giriş yapmamış kullanıcılar için)
+    if (error.code !== 'permission-denied') {
+      console.warn("Firestore Listener Error:", error);
+    }
+  });
+
+  return unsubscribe;
 };
 
 
@@ -92,6 +113,7 @@ export const storageService = {
   getData,
   saveSiteTitleToFirestore,
   getSiteTitleFromFirestore,
+  subscribeToSiteTitle,
   
   save: async (config: SiteConfig) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(config));

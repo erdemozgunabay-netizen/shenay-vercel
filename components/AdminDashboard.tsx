@@ -4,11 +4,11 @@ import {
   Users, ShoppingBag, Package, Settings, RefreshCw, 
   Trash2, LogOut, CheckCircle, X, Plus, Printer, 
   Phone, Mail, MapPin, Menu, Calendar, User, Clock,
-  ArrowRight, ExternalLink, CloudUpload, Loader2
+  ArrowRight, ExternalLink, CloudUpload, Loader2, Upload
 } from 'lucide-react';
 import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment } from '../types';
 import { AdminLogin } from './AdminLogin';
-import { storageService, saveSiteTitleToFirestore, getSiteTitleFromFirestore } from '../services/storageService';
+import { storageService, saveSiteTitleToFirestore, subscribeToSiteTitle } from '../services/storageService';
 import { auth } from '../firebase'; // Import auth to check user status directly
 
 interface AdminDashboardProps {
@@ -83,17 +83,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
   // Drag and Drop State for Products
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  // Initial Fetch from Firestore on Mount (if authenticated)
+  // Real-time Firestore Listener for Site Title
   useEffect(() => {
     if (isAuthenticated) {
-        const fetchFirestoreTitle = async () => {
-            const title = await getSiteTitleFromFirestore();
+        const unsubscribe = subscribeToSiteTitle((title) => {
             if (title) {
                 setSiteConfig(prev => ({ ...prev, siteTitle: title }));
-                setManualSiteTitle(title); // Sync input
+                // Update manual input if it's not currently being edited by THIS user to avoid overwriting typing?
+                // For simplicity and to ensure sync, we update it.
+                setManualSiteTitle(title);
             }
-        };
-        fetchFirestoreTitle();
+        });
+        return () => unsubscribe();
     }
   }, [isAuthenticated, setSiteConfig]);
 
@@ -116,12 +117,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
     setManualVideo(siteConfig.heroVideo || '');
     setManualAboutImage(siteConfig.aboutImage);
     setManualAboutText(siteConfig.aboutText);
-    // Note: We deliberately don't sync manualSiteTitle here if the user is typing, 
-    // but the initial load handles the database sync.
-    if (siteConfig.siteTitle !== manualSiteTitle && !isSaving) {
-       // Only sync if external change, avoid overwriting user typing
+    
+    // Only sync title if we are not currently saving (to avoid jumpiness)
+    // The real-time listener handles the incoming updates
+    if (siteConfig.siteTitle && !isSaving) {
        setManualSiteTitle(siteConfig.siteTitle);
     }
+    
     setManualFooterBio(siteConfig.footerBio);
     setManualEmail(siteConfig.contactEmail);
     setManualPhone(siteConfig.contactPhone);
@@ -627,7 +629,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                {/* Success Message Below Button */}
                {saveSuccess && (
                   <div className="text-center text-xs font-bold text-green-400 mt-2 animate-pulse bg-green-900/20 py-1 rounded">
-                      Değişiklikler yayınlandı ✅
+                      Değişiklikler buluta kaydedildi ✅
                   </div>
                )}
 
@@ -853,8 +855,178 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                 </div>
              </div>
          )}
-         {activeTab === 'Hizmetler' && (/* ... */ <></> /* ... kept logic same */)}
-         {/* ... (Other tabs logic kept same, handled by handlePublishChanges) ... */}
+         
+         {activeTab === 'Hizmetler' && (
+           <div className="animate-fade-in">
+              <div className="flex justify-between items-center mb-6">
+                 <h3 className="font-bold text-xl text-gray-800">Hizmet Yönetimi</h3>
+                 <button onClick={handleServiceAdd} className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-gold hover:text-black transition"><Plus size={16} /> Yeni Hizmet</button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                {siteConfig.services.map((service) => (
+                   <div key={service.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative group">
+                       <button onClick={() => handleServiceDelete(service.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 z-10 bg-white p-2 rounded-full shadow-sm"><Trash2 size={16} /></button>
+                       <div className="flex gap-4 mb-4">
+                           <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative group-hover:shadow-md transition">
+                               <img src={service.image} className="w-full h-full object-cover" />
+                               <label className="absolute inset-0 bg-black/50 flex items-center justify-center text-white opacity-0 hover:opacity-100 cursor-pointer transition text-xs font-bold">
+                                   Değiştir
+                                   <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                       if(e.target.files?.[0]) {
+                                           const b64 = await resizeImage(e.target.files[0], 600, 0.8);
+                                           handleServiceUpdate(service.id, 'image', b64);
+                                       }
+                                   }} />
+                               </label>
+                           </div>
+                           <div className="flex-1 space-y-2">
+                               <input 
+                                   value={service.title} 
+                                   onChange={(e) => handleServiceUpdate(service.id, 'title', e.target.value)}
+                                   className="w-full font-serif font-bold text-lg border-b border-transparent focus:border-brand-gold outline-none bg-transparent"
+                                   placeholder="Hizmet Adı"
+                               />
+                               <textarea 
+                                   value={service.description} 
+                                   onChange={(e) => handleServiceUpdate(service.id, 'description', e.target.value)}
+                                   className="w-full text-sm text-gray-500 border rounded p-2 focus:border-brand-gold outline-none resize-none h-20"
+                                   placeholder="Kısa açıklama..."
+                               />
+                           </div>
+                       </div>
+                       <div className="border-t border-gray-100 pt-4">
+                           <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Detaylı Açıklama</label>
+                           <textarea 
+                               value={service.longDescription || ''} 
+                               onChange={(e) => handleServiceUpdate(service.id, 'longDescription', e.target.value)}
+                               className="w-full text-sm text-gray-600 border rounded p-2 focus:border-brand-gold outline-none resize-none h-24 bg-gray-50"
+                               placeholder="Hizmet detayları sayfası için uzun açıklama..."
+                           />
+                       </div>
+                   </div>
+                ))}
+              </div>
+           </div>
+         )}
+         
+         {activeTab === 'Ürünler' && (
+           <div className="animate-fade-in">
+              <div className="flex justify-between items-center mb-6">
+                 <h3 className="font-bold text-xl text-gray-800">Ürün Yönetimi</h3>
+                 <button onClick={handleProductAdd} className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-gold hover:text-black transition"><Plus size={16} /> Yeni Ürün</button>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {siteConfig.products.map(product => (
+                     <div 
+                        key={product.id} 
+                        className={`bg-white p-4 rounded-xl shadow-sm border ${dragOverId === product.id ? 'border-brand-gold ring-2 ring-brand-gold/20' : 'border-gray-100'} transition relative`}
+                        onDragOver={(e) => handleDragOver(e, product.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, product.id)}
+                     >
+                        <button onClick={() => handleProductDelete(product.id)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 z-10 bg-white p-1 rounded-full"><Trash2 size={14} /></button>
+                        <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3 group">
+                             <img src={product.image} className="w-full h-full object-cover" />
+                             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                 <p className="text-white text-xs font-bold mb-2">Resmi Değiştir</p>
+                                 <label className="bg-white text-black px-3 py-1 rounded text-xs cursor-pointer hover:bg-brand-gold">
+                                     Seç
+                                     <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                        if(e.target.files?.[0]) {
+                                            const b64 = await resizeImage(e.target.files[0], 600, 0.8);
+                                            handleProductUpdate(product.id, 'image', b64);
+                                        }
+                                     }} />
+                                 </label>
+                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <input 
+                                value={product.name}
+                                onChange={(e) => handleProductUpdate(product.id, 'name', e.target.value)}
+                                className="w-full font-bold text-sm border-b border-transparent focus:border-brand-gold outline-none"
+                                placeholder="Ürün Adı"
+                            />
+                            <div className="flex gap-2">
+                                <input 
+                                    value={product.price}
+                                    onChange={(e) => handleProductUpdate(product.id, 'price', e.target.value)}
+                                    className="w-1/2 text-brand-gold font-bold text-sm border-b border-transparent focus:border-brand-gold outline-none"
+                                    placeholder="Fiyat (örn: €25.00)"
+                                />
+                            </div>
+                            <textarea 
+                                value={product.description}
+                                onChange={(e) => handleProductUpdate(product.id, 'description', e.target.value)}
+                                className="w-full text-xs text-gray-500 border rounded p-2 h-16 resize-none focus:border-brand-gold outline-none"
+                                placeholder="Ürün açıklaması..."
+                            />
+                        </div>
+                     </div>
+                 ))}
+              </div>
+           </div>
+         )}
+         
+         {activeTab === 'Blog' && (
+           <div className="animate-fade-in">
+             <div className="flex justify-between items-center mb-6">
+                 <h3 className="font-bold text-xl text-gray-800">Blog Yazıları</h3>
+                 <button onClick={handleBlogAdd} className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-gold hover:text-black transition"><Plus size={16} /> Yeni Yazı</button>
+             </div>
+             <div className="space-y-8">
+                 {siteConfig.blogPosts.map(post => (
+                     <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
+                         <button onClick={() => handleBlogDelete(post.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500"><Trash2 size={18} /></button>
+                         <div className="grid md:grid-cols-3 gap-6">
+                             <div className="md:col-span-1">
+                                 <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden relative group">
+                                     <img src={post.image} className="w-full h-full object-cover" />
+                                     <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition">
+                                         <Upload size={24} className="mb-2" />
+                                         <span className="text-xs font-bold">Kapak Fotoğrafı</span>
+                                         <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                             if(e.target.files?.[0]) {
+                                                 const b64 = await resizeImage(e.target.files[0], 800, 0.8);
+                                                 handleBlogUpdate(post.id, 'image', b64);
+                                             }
+                                         }} />
+                                     </label>
+                                 </div>
+                                 <input 
+                                     type="date" 
+                                     value={post.date}
+                                     onChange={(e) => handleBlogUpdate(post.id, 'date', e.target.value)}
+                                     className="mt-2 w-full text-xs text-gray-400 border rounded p-2"
+                                 />
+                             </div>
+                             <div className="md:col-span-2 space-y-4">
+                                 <input 
+                                     value={post.title}
+                                     onChange={(e) => handleBlogUpdate(post.id, 'title', e.target.value)}
+                                     className="w-full text-2xl font-serif font-bold border-b border-transparent focus:border-brand-gold outline-none p-1"
+                                     placeholder="Blog Başlığı"
+                                 />
+                                 <textarea 
+                                     value={post.excerpt}
+                                     onChange={(e) => handleBlogUpdate(post.id, 'excerpt', e.target.value)}
+                                     className="w-full text-sm text-gray-600 border rounded p-3 h-20 resize-none focus:border-brand-gold outline-none"
+                                     placeholder="Kısa Özet (Ana sayfada görünür)"
+                                 />
+                                 <textarea 
+                                     value={post.content || ''}
+                                     onChange={(e) => handleBlogUpdate(post.id, 'content', e.target.value)}
+                                     className="w-full text-sm text-gray-600 border rounded p-3 h-40 resize-none focus:border-brand-gold outline-none bg-gray-50 font-mono"
+                                     placeholder="Detaylı İçerik (Markdown veya Düz Metin)"
+                                 />
+                             </div>
+                         </div>
+                     </div>
+                 ))}
+             </div>
+           </div>
+         )}
+         
          {activeTab === 'Ayarlar' && (
              <div className="grid lg:grid-cols-2 gap-8 animate-fade-in">
                <div className="space-y-6">
