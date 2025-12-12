@@ -219,13 +219,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               // 1. Save Full Config to Realtime DB (Legacy support)
               await storageService.saveData('siteConfig', siteConfig);
               
-              // 2. Save Specific Settings to Firestore (Requirement)
-              const settingsToSave: FirestoreSettings = {
-                  ...localSettings, // This now contains all updated fields from inputs
-                  // Include legacy mappings if needed for backward compatibility
-                  siteTitle_tr: localSettings.siteTitle, 
-                  heroTitle_tr: localSettings.heroTitle
+              // 2. Prepare Settings for Firestore
+              const rawSettings: FirestoreSettings = {
+                  ...localSettings, 
+                  // Include specific overrides if necessary to prevent them being undefined
+                  siteTitle_tr: localSettings.siteTitle_tr ?? localSettings.siteTitle, 
+                  heroTitle_tr: localSettings.heroTitle_tr ?? localSettings.heroTitle
               };
+
+              // 3. SANITIZE DATA: Replace undefined with "" to prevent Firestore errors
+              const settingsToSave = Object.entries(rawSettings).reduce((acc, [key, value]) => {
+                  // If value is undefined, use empty string. If null, keep null (Firestore allows null).
+                  acc[key] = value === undefined ? "" : value;
+                  return acc;
+              }, {} as any);
               
               try {
                   await saveSettingsToFirestore(settingsToSave);
@@ -432,7 +439,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                            <div>
                                <label className="text-xs font-bold text-gray-400">Site Adı (Title)</label>
                                <input 
-                                   value={localSettings.siteTitle || ''}
+                                   value={localSettings.siteTitle ?? ''}
                                    onChange={(e) => updateSetting('siteTitle', e.target.value)} 
                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" 
                                />
@@ -440,7 +447,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                            <div>
                                <label className="text-xs font-bold text-gray-400">Ana Slogan (Hero Title)</label>
                                <textarea 
-                                   value={localSettings.heroTitle || ''}
+                                   value={localSettings.heroTitle ?? ''}
                                    onChange={(e) => updateSetting('heroTitle', e.target.value)}
                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" 
                                />
@@ -448,7 +455,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                            <div>
                                <label className="text-xs font-bold text-gray-400">Alt Başlık (Hero Subtitle)</label>
                                <textarea 
-                                   value={localSettings.heroSubtitle || ''}
+                                   value={localSettings.heroSubtitle ?? ''}
                                    onChange={(e) => updateSetting('heroSubtitle', e.target.value)}
                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" 
                                />
@@ -456,7 +463,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                            <div>
                                <label className="text-xs font-bold text-gray-400">Hakkımızda Yazısı (About Content)</label>
                                <textarea 
-                                   value={localSettings.aboutText || ''}
+                                   value={localSettings.aboutText ?? ''}
                                    onChange={(e) => updateSetting('aboutText', e.target.value)}
                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-32 resize-none" 
                                />
@@ -467,10 +474,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Settings size={18} /> İletişim & Footer</h3>
                        <div className="space-y-3">
-                           <div><label className="text-xs font-bold text-gray-400">Telefon</label><input value={localSettings.contactPhone || ''} onChange={(e) => updateSetting('contactPhone', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
-                           <div><label className="text-xs font-bold text-gray-400">Email</label><input value={localSettings.contactEmail || ''} onChange={(e) => updateSetting('contactEmail', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
-                           <div><label className="text-xs font-bold text-gray-400">Adres</label><input value={localSettings.contactAddress || ''} onChange={(e) => updateSetting('contactAddress', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
-                           <div><label className="text-xs font-bold text-gray-400">Footer Metni (Bio)</label><textarea value={localSettings.footerText || ''} onChange={(e) => updateSetting('footerText', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200 h-20" /></div>
+                           <div><label className="text-xs font-bold text-gray-400">Telefon</label><input value={localSettings.contactPhone ?? ''} onChange={(e) => updateSetting('contactPhone', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
+                           <div><label className="text-xs font-bold text-gray-400">Email</label><input value={localSettings.contactEmail ?? ''} onChange={(e) => updateSetting('contactEmail', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
+                           <div><label className="text-xs font-bold text-gray-400">Adres</label><input value={localSettings.contactAddress ?? ''} onChange={(e) => updateSetting('contactAddress', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
+                           <div><label className="text-xs font-bold text-gray-400">Footer Metni (Bio)</label><textarea value={localSettings.footerText ?? ''} onChange={(e) => updateSetting('footerText', e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200 h-20" /></div>
                        </div>
                    </div>
                </div>

@@ -106,6 +106,7 @@ const App = () => {
                 ...prev, 
                 rawSettings: settings || prev.rawSettings,
                 // Map generic fields first, allow lang overrides if implemented later
+                // If db value is empty string or null, fall back to currentT or prev
                 siteTitle: db.siteTitle || prev.siteTitle,
                 heroTitle: db.heroTitle || currentT.hero.title,
                 heroSubtitle: db.heroSubtitle || currentT.hero.subtitle,

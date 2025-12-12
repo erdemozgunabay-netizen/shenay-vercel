@@ -53,8 +53,8 @@ export interface TranslationStructure {
     blogTitle: string;
     bookTitle: string;
     aboutTitle: string;
-    aboutText: string; // New: Full about text
-    aboutRoles: [string, string, string]; // New: The 3 bullet points
+    aboutText: string; 
+    aboutRoles: [string, string, string]; 
     bookBtn: string;
     buyBtn: string;
     readMore: string;
@@ -121,7 +121,6 @@ export interface TranslationStructure {
     stepsTitle: string;
     productsTitle: string;
     dayNightTitle: string;
-    // New fields for sync
     proFixes: string;
     time: string;
     minutes: string;
@@ -152,11 +151,10 @@ export interface PaletteOption {
 export interface AnalysisResult {
   summary: string;
   
-  // Technical Data
   numeric_metrics?: {
     face_shape: string;
     skin_undertone: string;
-    skin_tone_lab: string; // "L:70, A:12, B:15"
+    skin_tone_lab: string; 
     eye_opening_ratio: string; 
     face_symmetry_score: number;
     other_metrics: { name: string, value: string, unit: string }[];
@@ -174,7 +172,6 @@ export interface AnalysisResult {
     confidence: number;
   }[];
 
-  // A/B Testing Palette
   palette?: {
     option_a: PaletteOption;
     option_b: PaletteOption;
@@ -195,14 +192,10 @@ export interface AnalysisResult {
   };
 
   fix_tips: string[];
-  
   products: string[];
-  
   estimated_time_minutes: number;
   error?: string | null;
 }
-
-// ------------------------------------------
 
 export interface AdBanner {
   id: number;
@@ -217,8 +210,8 @@ export interface Service {
   id: number;
   title: string;
   description: string;
-  longDescription?: string; // New: Detailed description for the separate page
-  gallery?: string[]; // New: Array of image URLs for the gallery
+  longDescription?: string;
+  gallery?: string[];
   image: string;
 }
 
@@ -241,10 +234,10 @@ export interface BlogPost {
   id: number;
   title: string;
   excerpt: string;
-  content?: string; // New: Full content for detail page
+  content?: string;
   date: string;
   image: string;
-  gallery?: string[]; // New: Gallery for blog post
+  gallery?: string[];
 }
 
 export interface CustomerDetails {
@@ -291,40 +284,39 @@ export interface InvoiceConfig {
 }
 
 export interface FirestoreSettings {
-  // Global (Shared) Content Fields
-  siteTitle?: string;
-  heroTitle?: string;
-  heroSubtitle?: string;
-  heroImage?: string;
-  heroVideo?: string;
-  aboutImage?: string;
-  aboutText?: string;
-  footerText?: string; // footerBio in SiteConfig
-  contactEmail?: string;
-  contactPhone?: string;
-  contactAddress?: string;
-  newsletterTitle?: string;
-  newsletterText?: string;
+  // Global (Shared) Content Fields - Allow null/undefined for flexibility but sanitized before save
+  siteTitle?: string | null;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+  heroImage?: string | null;
+  heroVideo?: string | null;
+  aboutImage?: string | null;
+  aboutText?: string | null;
+  footerText?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactAddress?: string | null;
+  newsletterTitle?: string | null;
+  newsletterText?: string | null;
 
-  // Language Specific Overrides (Optional fallback)
-  siteTitle_tr?: string;
-  heroTitle_tr?: string;
-  siteSubtitle_tr?: string;
-  siteContent_tr?: string;
+  // Language Specific Overrides
+  siteTitle_tr?: string | null;
+  heroTitle_tr?: string | null;
+  siteSubtitle_tr?: string | null;
+  siteContent_tr?: string | null;
   
-  siteTitle_en?: string;
-  heroTitle_en?: string;
-  siteSubtitle_en?: string;
-  siteContent_en?: string;
+  siteTitle_en?: string | null;
+  heroTitle_en?: string | null;
+  siteSubtitle_en?: string | null;
+  siteContent_en?: string | null;
 
-  siteTitle_de?: string;
-  heroTitle_de?: string;
-  siteSubtitle_de?: string;
-  siteContent_de?: string;
+  siteTitle_de?: string | null;
+  heroTitle_de?: string | null;
+  siteSubtitle_de?: string | null;
+  siteContent_de?: string | null;
 }
 
 export interface SiteConfig {
-  // Current Active Display Values (Mapped based on Lang)
   siteTitle: string; 
   heroTitle: string;
   heroSubtitle: string;
@@ -352,7 +344,6 @@ export interface SiteConfig {
   paymentConfig: PaymentConfig;
   invoiceConfig?: InvoiceConfig;
 
-  // Store raw translations
   rawSettings?: FirestoreSettings; 
 }
 
