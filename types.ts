@@ -53,6 +53,8 @@ export interface TranslationStructure {
     blogTitle: string;
     bookTitle: string;
     aboutTitle: string;
+    aboutText: string; // New: Full about text
+    aboutRoles: [string, string, string]; // New: The 3 bullet points
     bookBtn: string;
     buyBtn: string;
     readMore: string;
@@ -289,13 +291,30 @@ export interface InvoiceConfig {
 }
 
 export interface FirestoreSettings {
-  siteTitle?: string;
-  siteSubtitle?: string;
-  siteContent?: string;
+  // Global (Shared)
   siteImage?: string;
+  
+  // Turkish
+  siteTitle_tr?: string;
+  heroTitle_tr?: string;
+  siteSubtitle_tr?: string;
+  siteContent_tr?: string;
+  
+  // English
+  siteTitle_en?: string;
+  heroTitle_en?: string;
+  siteSubtitle_en?: string;
+  siteContent_en?: string;
+
+  // German
+  siteTitle_de?: string;
+  heroTitle_de?: string;
+  siteSubtitle_de?: string;
+  siteContent_de?: string;
 }
 
 export interface SiteConfig {
+  // Current Active Display Values (Mapped based on Lang)
   siteTitle: string; 
   heroTitle: string;
   heroSubtitle: string;
@@ -322,6 +341,9 @@ export interface SiteConfig {
   
   paymentConfig: PaymentConfig;
   invoiceConfig?: InvoiceConfig;
+
+  // Store raw translations
+  rawSettings?: FirestoreSettings; 
 }
 
 export interface AdminTask {

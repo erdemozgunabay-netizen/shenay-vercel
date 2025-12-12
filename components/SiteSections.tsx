@@ -4,6 +4,8 @@
 
 
 
+
+
 import React, { useState } from 'react';
 import { TranslationStructure, Service, Product, BlogPost, ReturnRequest, Appointment } from '../types';
 import { Star, ShoppingBag, Calendar, Clock, Instagram, Mail, ArrowRight, User, Package, Phone, RefreshCw, ChevronLeft, Image, Share2 } from 'lucide-react';
@@ -414,18 +416,12 @@ export const AboutSection: React.FC<AboutProps> = ({ t, image, text }) => (
              {text}
            </p>
            <ul className="space-y-4 mb-8">
-             <li className="flex items-center gap-3">
-               <div className="w-2 h-2 bg-brand-gold rounded-full"></div>
-               <span className="font-bold">Bridal Room & Academy Kurucusu</span>
-             </li>
-             <li className="flex items-center gap-3">
-               <div className="w-2 h-2 bg-brand-gold rounded-full"></div>
-               <span>Profesyonel Makyaj & Saç Tasarımı</span>
-             </li>
-             <li className="flex items-center gap-3">
-               <div className="w-2 h-2 bg-brand-gold rounded-full"></div>
-               <span>Medikal Cilt Bakımı Uzmanı (Aquafacial)</span>
-             </li>
+             {t.aboutRoles.map((role, index) => (
+               <li key={index} className="flex items-center gap-3">
+                 <div className="w-2 h-2 bg-brand-gold rounded-full"></div>
+                 <span className="font-bold">{role}</span>
+               </li>
+             ))}
            </ul>
            <div className="flex gap-4">
               <a href="#" className="p-3 bg-black text-white rounded-full hover:bg-brand-gold transition"><Instagram size={20} /></a>

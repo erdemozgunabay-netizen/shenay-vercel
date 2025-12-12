@@ -4,9 +4,9 @@ import {
   Users, ShoppingBag, Package, Settings, RefreshCw, 
   Trash2, LogOut, CheckCircle, X, Plus, Printer, 
   Phone, Mail, MapPin, Menu, Calendar, User, Clock,
-  ArrowRight, ExternalLink, CloudUpload, Loader2, Upload, Wifi, WifiOff, Lock
+  ArrowRight, ExternalLink, CloudUpload, Loader2, Upload, Wifi, WifiOff, Lock, Globe
 } from 'lucide-react';
-import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment, FirestoreSettings } from '../types';
+import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment, FirestoreSettings, LanguageCode } from '../types';
 import { AdminLogin } from './AdminLogin';
 import { storageService, saveSettingsToFirestore, subscribeToSettings, subscribeToOrders } from '../services/storageService';
 import { auth } from '../firebase'; // Import auth to check user status directly
@@ -46,6 +46,7 @@ type ConnectionStatus = 'connecting' | 'connected' | 'error' | 'permission-denie
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, setSiteConfig, isAuthenticated, onLogin, onLogout }) => {
   const [activeTab, setActiveTab] = useState('Genel Bakış'); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [editLang, setEditLang] = useState<LanguageCode>('tr');
   
   // Saving State
   const [isSaving, setIsSaving] = useState(false);
@@ -55,16 +56,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
   const [connectionMessage, setConnectionMessage] = useState<string>('Sunucuya bağlanılıyor...');
 
-  // Manual Edit States (Initialized from Props)
-  const [manualTitle, setManualTitle] = useState(siteConfig.heroTitle);
-  const [manualSubtitle, setManualSubtitle] = useState(siteConfig.heroSubtitle);
+  // --- MULTI-LANGUAGE EDIT STATES ---
+  // We maintain a local copy of all fields for all languages
+  const [localSettings, setLocalSettings] = useState<FirestoreSettings>({});
+
+  // Image (Shared)
   const [manualImage, setManualImage] = useState(siteConfig.heroImage);
-  const [manualVideo, setManualVideo] = useState(siteConfig.heroVideo || '');
   const [manualAboutImage, setManualAboutImage] = useState(siteConfig.aboutImage);
-  const [manualAboutText, setManualAboutText] = useState(siteConfig.aboutText);
-  
-  // New Footer/Contact States
-  const [manualSiteTitle, setManualSiteTitle] = useState(siteConfig.siteTitle);
+  const [manualVideo, setManualVideo] = useState(siteConfig.heroVideo || '');
+
+  // Footer/Contact (Shared for now, can be extended if needed)
   const [manualFooterBio, setManualFooterBio] = useState(siteConfig.footerBio);
   const [manualEmail, setManualEmail] = useState(siteConfig.contactEmail);
   const [manualPhone, setManualPhone] = useState(siteConfig.contactPhone);
@@ -101,7 +102,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
         setConnectionStatus('connecting');
         setConnectionMessage('Sunucuyla bağlantı kuruluyor...');
 
-        // Clear existing
         if (unsubscribeSettings) { unsubscribeSettings(); unsubscribeSettings = undefined; }
         if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = undefined; }
 
@@ -112,17 +112,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                     setConnectionStatus('connected');
                     setConnectionMessage('Canlı bağlantı aktif');
                     if (settings) {
-                        setSiteConfig(prev => ({ 
-                            ...prev, 
-                            siteTitle: settings.siteTitle || prev.siteTitle,
-                            heroSubtitle: settings.siteSubtitle || prev.heroSubtitle,
-                            aboutText: settings.siteContent || prev.aboutText,
-                            heroImage: settings.siteImage || prev.heroImage
-                        }));
-                        // Sync local inputs
-                        if (settings.siteTitle) setManualSiteTitle(settings.siteTitle);
-                        if (settings.siteSubtitle) setManualSubtitle(settings.siteSubtitle);
-                        if (settings.siteContent) setManualAboutText(settings.siteContent);
+                        setLocalSettings(settings); // Update local editing state
                         if (settings.siteImage) setManualImage(settings.siteImage);
                     }
                 },
@@ -184,8 +174,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
 
   // Sync local state when config changes (Legacy Sync for non-firestore fields)
   useEffect(() => {
-    setManualTitle(siteConfig.heroTitle);
-    // Note: subtitle, content, image are now synced via the listener above
     setManualVideo(siteConfig.heroVideo || '');
     setManualAboutImage(siteConfig.aboutImage);
     setManualFooterBio(siteConfig.footerBio);
@@ -255,9 +243,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               
               // 2. Save Specific Settings to Firestore (Requirement)
               const settingsToSave: FirestoreSettings = {
-                  siteTitle: manualSiteTitle,
-                  siteSubtitle: manualSubtitle,
-                  siteContent: manualAboutText,
+                  ...localSettings, // Include all existing translations
                   siteImage: manualImage
               };
               
@@ -281,16 +267,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               setIsSaving(false);
           }
       }
-  };
-
-  // ... (Rest of the component functions: handleManualUpdate, handleMediaUpdate, etc. stay the same)
-
-  const handleManualUpdate = () => {
-      setSiteConfig(prev => ({
-          ...prev,
-          heroTitle: manualTitle,
-          heroSubtitle: manualSubtitle
-      }));
   };
 
   const handleMediaUpdate = async (type: 'image' | 'video' | 'about', urlOrFile: string | File) => {
@@ -320,7 +296,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
   const handleFooterUpdate = () => {
       setSiteConfig(prev => ({
           ...prev,
-          siteTitle: manualSiteTitle, // This updates the config state
           footerBio: manualFooterBio,
           contactEmail: manualEmail,
           contactPhone: manualPhone,
@@ -343,11 +318,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       alert("Ayarlar güncellendi! 'Yayınla' butonuna basarak veritabanına yazın.");
   };
 
-  const handleAboutTextUpdate = () => {
-    setSiteConfig(prev => ({
-      ...prev,
-      aboutText: manualAboutText
-    }));
+  // Helper to update local settings for a specific language
+  const updateLocalSetting = (key: keyof FirestoreSettings, value: string) => {
+      setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Helper to get value for current edit lang
+  const getSetting = (baseKey: string) => {
+      const key = `${baseKey}_${editLang}` as keyof FirestoreSettings;
+      return localSettings[key] || '';
   };
 
   // ... (CMS Logic methods - handleServiceUpdate, handleProductUpdate, etc. kept as is)
@@ -741,6 +720,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          </div>
          {activeTab === 'Genel Bakış' && (
            <div className="space-y-8 animate-fade-in">
+              {/* ... (Overview Content) ... */}
               <div className="bg-gradient-to-br from-brand-gold to-yellow-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
                  <div className="relative z-10">
                    <h3 className="font-serif text-3xl mb-2">Hoşgeldin, Shenay</h3>
@@ -832,6 +812,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          )}
          
          {activeTab === 'Siparişler' && (
+             // ... (Existing Orders Tab) ...
              <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
@@ -1131,33 +1112,87 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
              <div className="grid lg:grid-cols-2 gap-8 animate-fade-in">
                <div className="space-y-6">
                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                       <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Type size={18} /> Metin & Görsel İçerikleri</h3>
+                       <div className="flex justify-between items-center mb-6">
+                           <h3 className="font-bold text-gray-800 flex items-center gap-2"><Type size={18} /> Metin & Görsel İçerikleri</h3>
+                           {/* Language Selector */}
+                           <div className="flex bg-gray-100 p-1 rounded-lg">
+                               {(['tr', 'en', 'de'] as const).map(lang => (
+                                   <button 
+                                       key={lang}
+                                       onClick={() => setEditLang(lang)}
+                                       className={`px-3 py-1 text-xs font-bold rounded-md transition ${editLang === lang ? 'bg-white text-black shadow' : 'text-gray-400 hover:text-gray-600'}`}
+                                   >
+                                       {lang.toUpperCase()}
+                                   </button>
+                               ))}
+                           </div>
+                       </div>
+                       
                        <div className="space-y-4">
                            {/* Site Title */}
                            <div>
-                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site Başlığı <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
-                               <input value={manualSiteTitle} onChange={(e) => setManualSiteTitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" />
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">
+                                   Site Adı ({editLang.toUpperCase()}) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span>
+                               </label>
+                               <input 
+                                   value={getSetting('siteTitle')}
+                                   onChange={(e) => updateLocalSetting(`siteTitle_${editLang}` as keyof FirestoreSettings, e.target.value)} 
+                                   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" 
+                               />
+                           </div>
+
+                           {/* Hero Title */}
+                           <div>
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">
+                                   Ana Slogan ({editLang.toUpperCase()}) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span>
+                               </label>
+                               <textarea 
+                                   value={getSetting('heroTitle')}
+                                   onChange={(e) => updateLocalSetting(`heroTitle_${editLang}` as keyof FirestoreSettings, e.target.value)}
+                                   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" 
+                                   placeholder={`Slogan in ${editLang.toUpperCase()}...`} 
+                               />
                            </div>
                            
                            {/* Site Subtitle */}
                            <div>
-                               <label className="text-xs font-bold text-gray-400 flex justify-between">Alt Başlık (Subtitle) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
-                               <textarea value={manualSubtitle} onChange={(e) => setManualSubtitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" />
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">
+                                   Alt Başlık ({editLang.toUpperCase()}) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span>
+                               </label>
+                               <textarea 
+                                   value={getSetting('siteSubtitle')}
+                                   onChange={(e) => updateLocalSetting(`siteSubtitle_${editLang}` as keyof FirestoreSettings, e.target.value)}
+                                   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" 
+                               />
                            </div>
 
                            {/* Site Content / About */}
                            <div>
-                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site İçeriği / Hakkında <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
-                               <textarea value={manualAboutText} onChange={(e) => setManualAboutText(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-32 resize-none" />
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">
+                                   Site İçeriği / Hakkında ({editLang.toUpperCase()}) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span>
+                               </label>
+                               <textarea 
+                                   value={getSetting('siteContent')}
+                                   onChange={(e) => updateLocalSetting(`siteContent_${editLang}` as keyof FirestoreSettings, e.target.value)}
+                                   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-32 resize-none" 
+                               />
                            </div>
 
                            {/* Site Image URL */}
                            <div>
                                <label className="text-xs font-bold text-gray-400 flex justify-between">Site Görseli (URL) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
-                               <input value={manualImage} onChange={(e) => setManualImage(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" placeholder="https://..." />
+                               <input 
+                                   value={manualImage} 
+                                   onChange={(e) => setManualImage(e.target.value)} 
+                                   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" 
+                                   placeholder="https://..." 
+                               />
                            </div>
 
-                           <button onClick={() => { handleManualUpdate(); handleAboutTextUpdate(); }} className="w-full bg-brand-dark text-white py-3 rounded-lg font-bold hover:bg-brand-gold hover:text-black transition text-sm">Önizle (Kaydetmez)</button>
+                           <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-lg text-xs text-yellow-700">
+                               <p className="font-bold flex items-center gap-1"><Globe size={12} /> İpucu:</p>
+                               <p>Değişiklikleri kaydettiğinizde, düzenlediğiniz <strong>TÜM DİLLER</strong> veritabanına yazılır. Lütfen her dil sekmesini kontrol edin.</p>
+                           </div>
                        </div>
                    </div>
                    
@@ -1221,7 +1256,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                                    <input placeholder="Mahkeme Yeri (Jurisdiction)" value={manualJurisdiction} onChange={(e) => setManualJurisdiction(e.target.value)} className="w-full p-2 text-xs border rounded" />
                                </div>
                            </div>
-                           <button onClick={handleFooterUpdate} className="w-full bg-brand-gold text-black py-2 rounded-lg font-bold text-sm hover:bg-black hover:text-white transition">Tüm Ayarları Kaydet</button>
+                           <button onClick={handlePublishChanges} className="w-full bg-brand-gold text-black py-2 rounded-lg font-bold text-sm hover:bg-black hover:text-white transition">Tüm Ayarları Kaydet</button>
                        </div>
                    </div>
                </div>

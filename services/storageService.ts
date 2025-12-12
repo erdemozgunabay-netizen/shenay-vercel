@@ -28,7 +28,7 @@ export const saveSettingsToFirestore = async (settings: FirestoreSettings) => {
 
 // Deprecated: use subscribeToSettings instead
 export const saveSiteTitleToFirestore = async (newTitle: string) => {
-    return saveSettingsToFirestore({ siteTitle: newTitle });
+    return saveSettingsToFirestore({ siteTitle_tr: newTitle });
 };
 
 // Real-time Listener for Site Settings (Title, Subtitle, Image, Content)
@@ -64,7 +64,7 @@ export const subscribeToSiteTitle = (
     onError?: (error: any) => void
 ) => {
     return subscribeToSettings((settings) => {
-        onUpdate(settings?.siteTitle || null);
+        onUpdate(settings?.siteTitle_tr || null);
     }, onError);
 };
 

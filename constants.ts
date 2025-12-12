@@ -6,6 +6,9 @@
 
 
 
+
+
+
 import { Translations, AdBanner, Service, Product, BlogPost } from './types';
 
 export const INSTAGRAM_LINK = "https://instagram.com/shenayileri";
@@ -70,6 +73,12 @@ export const TRANSLATIONS: Translations = {
       blogTitle: "Beauty Trends & Tips",
       bookTitle: "Book an Appointment",
       aboutTitle: "About Shenay Ileri",
+      aboutText: "With years of experience in the beauty and aesthetics world, Shenay Ileri aims to reveal the unique sparkle within every woman. A graduate of Fames Face Academy, Shenay is not just a makeup artist but also a beauty coach.",
+      aboutRoles: [
+          "Founder of Bridal Room & Academy",
+          "Professional Makeup & Hair Design",
+          "Medical Skin Care Expert (Aquafacial)"
+      ],
       bookBtn: "Confirm Booking",
       buyBtn: "Add to Cart",
       readMore: "Read More",
@@ -201,6 +210,12 @@ export const TRANSLATIONS: Translations = {
       blogTitle: "Güzellik İpuçları & Blog",
       bookTitle: "Randevu Oluştur",
       aboutTitle: "Shenay İleri Hakkında",
+      aboutText: "Shenay İleri, güzellik ve estetik dünyasında yıllara dayanan tecrübesiyle, her kadının içindeki eşsiz ışıltıyı ortaya çıkarmayı hedefler. Fames Face Akademie mezunu olan Shenay, sadece bir makyaj sanatçısı değil, aynı zamanda bir güzellik koçudur.",
+      aboutRoles: [
+          "Bridal Room & Academy Kurucusu",
+          "Profesyonel Makyaj & Saç Tasarımı",
+          "Medikal Cilt Bakımı Uzmanı (Aquafacial)"
+      ],
       bookBtn: "Randevuyu Onayla",
       buyBtn: "Sepete Ekle",
       readMore: "Devamını Oku",
@@ -332,6 +347,12 @@ export const TRANSLATIONS: Translations = {
       blogTitle: "Blog & Tipps",
       bookTitle: "Termin buchen",
       aboutTitle: "Über Shenay Ileri",
+      aboutText: "Shenay Ileri kombiniert jahrelange Erfahrung in der Schönheits- und Ästhetikbranche mit dem Ziel, das einzigartige Strahlen jeder Frau zum Vorschein zu bringen. Als Absolventin der Fames Face Akademie ist Shenay nicht nur Visagistin, sondern auch Schönheitscoach.",
+      aboutRoles: [
+          "Gründerin von Bridal Room & Academy",
+          "Professionelles Make-up & Haarstyling",
+          "Expertin für medizinische Hautpflege (Aquafacial)"
+      ],
       bookBtn: "Bestätigen",
       buyBtn: "In den Warenkorb",
       readMore: "Mehr lesen",
@@ -466,6 +487,60 @@ export const PRODUCT_CATALOG: Record<number, Record<string, { name: string, desc
     en: { name: "Contour Palette", description: "3-color contour palette suitable for all skin tones." },
     de: { name: "Contour Palette", description: "3-Farben-Konturpalette für alle Hauttöne." },
     tr: { name: "Contour Palette", description: "Her cilt tonuna uygun 3 renkli kontür paleti." }
+  }
+};
+
+export const BLOG_CATALOG: Record<number, Record<string, { title: string, excerpt: string, content: string }>> = {
+  1: {
+    tr: {
+      title: "2025 Gelin Makyajı Trendleri",
+      excerpt: "Bu sezonun öne çıkan doğal ışıltılar ve pastel tonları hakkında bilmeniz gerekenler.",
+      content: "2025 gelin makyajı trendlerinde doğallık ve ışıltı bir araya geliyor. Geçmiş yılların yoğun kontür uygulamaları ve mat bitişli fondötenleri yerini 'Glass Skin' görünümüne bırakıyor. Bu sezon gelinlerde en çok tercih edilecek stil, cildin kendi ışıltısını ortaya çıkaran ince yapılı ürünler ve krem allıklar olacak.\n\nGöz makyajında ise şeftali, pembe ve şampanya tonları hakimiyetini sürdürüyor. Abartılı takma kirpikler yerine, tekli kirpiklerle daha doğal ama etkileyici bakışlar hedefleniyor. Dudaklarda ise 'Glossy' bitişli nude rujlar ve hafif renkli parlatıcılar geri dönüyor.\n\nSaç trendlerinde ise sıkı topuzlar yerini dağınık, bohem örgülere ve doğal dalgalara bırakıyor. Aksesuar olarak inciler ve taze çiçekler ön planda."
+    },
+    en: {
+      title: "Bridal Makeup Trends 2025",
+      excerpt: "Everything you need to know about this season's natural glow and pastel tones.",
+      content: "In 2025 bridal makeup trends, naturalness and glow come together. Heavy contour applications and matte finish foundations of past years are leaving their place to the 'Glass Skin' look. The most preferred style for brides this season will be thin-structured products and cream blushes that reveal the skin's own radiance.\n\nIn eye makeup, peach, pink, and champagne tones continue their dominance. Instead of exaggerated false eyelashes, more natural but impressive looks are targeted with individual lashes. On the lips, 'Glossy' finish nude lipsticks and lightly colored glosses are returning.\n\nIn hair trends, tight buns are leaving their place to messy, bohemian braids and natural waves. Pearls and fresh flowers are at the forefront as accessories."
+    },
+    de: {
+      title: "Braut Make-up Trends 2025",
+      excerpt: "Alles, was Sie über den natürlichen Glanz und die Pastelltöne dieser Saison wissen müssen.",
+      content: "Bei den Braut-Make-up-Trends 2025 treffen Natürlichkeit und Glanz aufeinander. Starke Konturierungen und mattierende Foundations der vergangenen Jahre weichen dem 'Glass Skin'-Look. Der bevorzugte Stil für Bräute in dieser Saison werden Produkte mit leichter Textur und Creme-Rouges sein, die das eigene Strahlen der Haut zum Vorschein bringen.\n\nBeim Augen-Make-up dominieren weiterhin Pfirsich-, Rosa- und Champagnertöne. Statt übertriebener falscher Wimpern wird mit einzelnen Wimpern ein natürlicherer, aber dennoch eindrucksvoller Blick angestrebt. Auf den Lippen kehren 'Glossy'-Finish Nude-Lippenstifte und leicht getönte Glosse zurück.\n\nBei den Haartrends weichen strenge Dutts messigen, böhmischen Zöpfen und natürlichen Wellen. Als Accessoires stehen Perlen und frische Blumen im Vordergrund."
+    }
+  },
+  2: {
+    tr: {
+      title: "Kış Aylarında Cilt Bakımı",
+      excerpt: "Soğuk havalarda cildinizi korumanın 5 altın kuralı.",
+      content: "Kış ayları, soğuk hava ve rüzgarın etkisiyle cildin kurumasına, çatlamasına ve hassaslaşmasına neden olabilir. Bu dönemde cilt bakım rutininizi mevsime göre güncellemek hayati önem taşır.\n\n1. Nemlendirmeyi İhmal Etmeyin: Yazın kullandığınız su bazlı nemlendiriciler kışın yetersiz kalabilir. Daha yoğun, seramid ve hyaluronik asit içeren kremlere geçiş yapın.\n2. Güneş Koruyucu Kullanın: Kış güneşi de cilde zarar verir. Özellikle karlı havalarda UV ışınlarının yansıması cildi yakabilir. SPF 30+ koruyucu kullanmaya devam edin.\n3. Sıcak Sudan Kaçının: Çok sıcak suyla yüz yıkamak cildin doğal yağlarını yok eder. Ilık su tercih edin.\n4. Dudak Bakımı: Kuruyan dudaklar için yoğun onarıcı balmlar kullanın ve haftada bir peeling yapın.\n5. Bol Su İçin: Cildin nem dengesini korumak için içeriden de desteklemek gerekir. Günde en az 2 litre su tüketmeye özen gösterin."
+    },
+    en: {
+      title: "Winter Skin Care",
+      excerpt: "5 golden rules to protect your skin in cold weather.",
+      content: "Winter months can cause the skin to dry, crack, and become sensitive due to cold air and wind. It is vital to update your skincare routine according to the season during this period.\n\n1. Don't Neglect Moisturizing: Water-based moisturizers you use in summer may be insufficient in winter. Switch to more intense creams containing ceramides and hyaluronic acid.\n2. Use Sunscreen: Winter sun also damages the skin. Especially in snowy weather, the reflection of UV rays can burn the skin. Continue using SPF 30+ protection.\n3. Avoid Hot Water: Washing your face with very hot water destroys the skin's natural oils. Prefer lukewarm water.\n4. Lip Care: Use intense repairing balms for drying lips and peel once a week.\n5. Drink Plenty of Water: It is necessary to support from the inside to protect the moisture balance of the skin. Take care to consume at least 2 liters of water a day."
+    },
+    de: {
+      title: "Hautpflege im Winter",
+      excerpt: "5 goldene Regeln zum Schutz Ihrer Haut bei kaltem Wetter.",
+      content: "Die Wintermonate können durch kalte Luft und Wind dazu führen, dass die Haut austrocknet, rissig und empfindlich wird. In dieser Zeit ist es lebenswichtig, Ihre Hautpflegeroutine der Jahreszeit anzupassen.\n\n1. Vernachlässigen Sie nicht die Feuchtigkeitspflege: Wasserbasierte Feuchtigkeitscremes, die Sie im Sommer verwenden, können im Winter unzureichend sein. Wechseln Sie zu intensiveren Cremes mit Ceramiden und Hyaluronsäure.\n2. Verwenden Sie Sonnenschutz: Auch die Wintersonne schadet der Haut. Besonders bei Schneewetter kann die Reflexion der UV-Strahlen die Haut verbrennen. Verwenden Sie weiterhin SPF 30+ Schutz.\n3. Vermeiden Sie heißes Wasser: Das Waschen des Gesichts mit sehr heißem Wasser zerstört die natürlichen Öle der Haut. Bevorzugen Sie lauwarmes Wasser.\n4. Lippenpflege: Verwenden Sie intensive Reparaturbalsame für trockene Lippen und peelen Sie einmal pro Woche.\n5. Trinken Sie viel Wasser: Es ist notwendig, von innen zu unterstützen, um den Feuchtigkeitshaushalt der Haut zu schützen. Achten Sie darauf, täglich mindestens 2 Liter Wasser zu trinken."
+    }
+  },
+  3: {
+    tr: {
+      title: "Doğru Fondöten Seçimi",
+      excerpt: "Cilt alt tonunuza göre en doğru fondöteni nasıl seçersiniz?",
+      content: "Makyajın en önemli adımı kusursuz bir ten makyajıdır. Ancak yanlış fondöten seçimi tüm makyajı bozabilir. Doğru fondöteni seçmek için öncelikle cilt alt tonunuzu belirlemelisiniz.\n\n- Soğuk (Cool) Alt Ton: Damarlarınız mavi veya mor görünüyorsa, pembe alt tonlu fondötenler size uygundur.\n- Sıcak (Warm) Alt Ton: Damarlarınız yeşil görünüyorsa, sarı veya altın alt tonlu fondötenleri tercih etmelisiniz.\n- Nötr (Neutral) Alt Ton: Damarlarınız hem yeşil hem mavi görünüyorsa şanslısınız, bej tonları size çok yakışacaktır.\n\nAyrıca fondöten denerken el bileğinizde değil, boynunuz ile çene hattınızın birleştiği noktada deneme yapmalısınız. Doğru renk, cildinizde kaybolup giden renktir."
+    },
+    en: {
+      title: "Choosing the Right Foundation",
+      excerpt: "How to choose the right foundation according to your skin undertone?",
+      content: "The most important step of makeup is a flawless complexion. However, choosing the wrong foundation can ruin the whole makeup. To choose the right foundation, you must first determine your skin undertone.\n\n- Cool Undertone: If your veins look blue or purple, pink undertone foundations are suitable for you.\n- Warm Undertone: If your veins look green, you should prefer yellow or gold undertone foundations.\n- Neutral Undertone: If your veins look both green and blue, you are lucky, beige tones will suit you very well.\n\nAlso, when trying foundation, you should test it not on your wrist, but at the point where your neck and jawline meet. The right color is the color that disappears into your skin."
+    },
+    de: {
+      title: "Die Wahl der richtigen Foundation",
+      excerpt: "Wie wählen Sie die richtige Foundation entsprechend Ihrem Hautunterton aus?",
+      content: "Der wichtigste Schritt beim Make-up ist ein makelloser Teint. Die Wahl der falschen Foundation kann jedoch das gesamte Make-up ruinieren. Um die richtige Foundation zu wählen, müssen Sie zunächst Ihren Hautunterton bestimmen.\n\n- Kühler (Cool) Unterton: Wenn Ihre Adern blau oder lila aussehen, sind Foundations mit rosa Unterton für Sie geeignet.\n- Warmer (Warm) Unterton: Wenn Ihre Adern grün aussehen, sollten Sie gelbe oder goldene Untertöne bevorzugen.\n- Neutraler (Neutral) Unterton: Wenn Ihre Adern sowohl grün als auch blau aussehen, haben Sie Glück, Beigetöne werden Ihnen sehr gut stehen.\n\nAußerdem sollten Sie Foundation nicht am Handgelenk testen, sondern an der Stelle, an der Hals und Kieferlinie zusammentreffen. Die richtige Farbe ist die Farbe, die in Ihrer Haut verschwindet."
+    }
   }
 };
 

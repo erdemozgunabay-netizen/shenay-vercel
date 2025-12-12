@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TRANSLATIONS, MOCK_ADS, HERO_IMAGE, ABOUT_IMAGE, DEFAULT_ABOUT_TEXT, INSTAGRAM_LINK, PHONE_NUMBER, SERVICES, PRODUCTS, BLOG_POSTS, RETURN_POLICIES, SERVICE_CATALOG, PRODUCT_CATALOG } from './constants';
-import { LanguageCode, SiteConfig, Order, CartItem, Product, CustomerDetails, ReturnRequest, Appointment } from './types';
+import { TRANSLATIONS, MOCK_ADS, HERO_IMAGE, ABOUT_IMAGE, DEFAULT_ABOUT_TEXT, INSTAGRAM_LINK, PHONE_NUMBER, SERVICES, PRODUCTS, BLOG_POSTS, RETURN_POLICIES, SERVICE_CATALOG, PRODUCT_CATALOG, BLOG_CATALOG } from './constants';
+import { LanguageCode, SiteConfig, Order, CartItem, Product, CustomerDetails, ReturnRequest, Appointment, FirestoreSettings } from './types';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSection, ReturnsSection, ServiceDetail, BlogDetail } from './components/SiteSections';
 import { MakeupAnalyzer } from './components/MakeupAnalyzer';
@@ -77,24 +77,44 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // --- HELPER: Get Localized String from Settings ---
+  // Priorities: 1. Firestore specific lang, 2. Firestore fallback (TR), 3. Code Constant (TRANSLATIONS)
+  const getLocalized = (settings: FirestoreSettings | undefined, keyPrefix: string, activeLang: LanguageCode, constantFallback?: string) => {
+      if (!settings) return constantFallback || '';
+      
+      const specific = settings[`${keyPrefix}_${activeLang}` as keyof FirestoreSettings];
+      // Note: We don't necessarily fallback to TR from Firestore if it's empty, 
+      // we might prefer the hardcoded English string if the user is viewing English but DB is empty for EN.
+      // But for simplicity, we check if specific exists, if not, use constant.
+      
+      return specific || constantFallback || '';
+  };
+
   // --- REAL-TIME LISTENERS ---
 
   // 1. Listen for Site Settings (Firestore - Title, Subtitle, Image, Content)
+  // This effect runs initially AND whenever 'lang' changes to update the displayed text
   useEffect(() => {
     const unsubscribe = subscribeToSettings(
         (settings) => {
-            if (settings) {
-                setSiteConfig(prev => ({ 
-                    ...prev, 
-                    siteTitle: settings.siteTitle || prev.siteTitle,
-                    heroSubtitle: settings.siteSubtitle || prev.heroSubtitle,
-                    aboutText: settings.siteContent || prev.aboutText,
-                    heroImage: settings.siteImage || prev.heroImage
-                }));
-            }
+            const currentT = TRANSLATIONS[lang];
+            // Use helper to decide between DB value or Default Translation value
+            const title = getLocalized(settings || undefined, 'siteTitle', lang, siteConfig.siteTitle);
+            const hTitle = getLocalized(settings || undefined, 'heroTitle', lang, currentT.hero.title);
+            const hSubtitle = getLocalized(settings || undefined, 'siteSubtitle', lang, currentT.hero.subtitle);
+            const content = getLocalized(settings || undefined, 'siteContent', lang, currentT.sections.aboutText);
+
+            setSiteConfig(prev => ({ 
+                ...prev, 
+                rawSettings: settings || prev.rawSettings,
+                siteTitle: title || prev.siteTitle,
+                heroTitle: hTitle, 
+                heroSubtitle: hSubtitle,
+                aboutText: content,
+                heroImage: settings?.siteImage || prev.heroImage
+            }));
             setIsTitleLoaded(true);
         },
-        // App.tsx usually doesn't show connection errors for public users, but we can log them
         (error) => {
             if (error.code !== 'permission-denied') {
                 console.warn("App Settings Listener Error:", error);
@@ -102,7 +122,7 @@ const App = () => {
         }
     );
     return () => unsubscribe();
-  }, []);
+  }, [lang]); // Re-run when language changes
 
   // 2. Listen for Site Config - Legacy Data (Realtime DB)
   useEffect(() => {
@@ -111,11 +131,10 @@ const App = () => {
         setSiteConfig(prev => ({
           ...INITIAL_CONFIG, 
           ...data,
-          // Firestore overrides take precedence
-          siteTitle: prev.siteTitle || data.siteTitle || "",
-          heroSubtitle: prev.heroSubtitle || data.heroSubtitle || "",
-          aboutText: prev.aboutText || data.aboutText || "",
-          heroImage: prev.heroImage || data.heroImage || ""
+          // Firestore overrides take precedence (handled in other effect, but we keep structure here)
+          heroTitle: prev.heroTitle, 
+          heroSubtitle: prev.heroSubtitle,
+          aboutText: prev.aboutText
         }));
       }
       setIsConfigLoaded(true);
@@ -135,28 +154,50 @@ const App = () => {
 
   // Handle translations updates based on language selection
   useEffect(() => {
-    if (!isConfigLoaded) return;
-    setSiteConfig(prev => ({
-        ...prev,
-        services: prev.services.map(service => {
-            const translation = SERVICE_CATALOG[service.id]?.[lang];
-            if (translation) {
-                return { 
-                  ...service, 
-                  title: translation.title, 
-                  description: translation.description 
-                };
-            }
-            return service;
-        }),
-        products: prev.products.map(product => {
-            const translation = PRODUCT_CATALOG[product.id]?.[lang];
-            if (translation) {
-                return { ...product, name: translation.name, description: translation.description };
-            }
-            return product;
-        })
-    }));
+    if (isConfigLoaded) {
+        const currentT = TRANSLATIONS[lang];
+        
+        // Update Catalog Items (Services, Products, Blogs)
+        setSiteConfig(prev => ({
+            ...prev,
+            // Force update text fields from constants if no DB override exists
+            heroTitle: getLocalized(prev.rawSettings, 'heroTitle', lang, currentT.hero.title),
+            heroSubtitle: getLocalized(prev.rawSettings, 'siteSubtitle', lang, currentT.hero.subtitle),
+            aboutText: getLocalized(prev.rawSettings, 'siteContent', lang, currentT.sections.aboutText),
+            
+            // Map Services
+            services: prev.services.map(service => {
+                const translation = SERVICE_CATALOG[service.id]?.[lang];
+                if (translation) {
+                    return { ...service, title: translation.title, description: translation.description };
+                }
+                return service;
+            }),
+            
+            // Map Products
+            products: prev.products.map(product => {
+                const translation = PRODUCT_CATALOG[product.id]?.[lang];
+                if (translation) {
+                    return { ...product, name: translation.name, description: translation.description };
+                }
+                return product;
+            }),
+
+            // Map Blog Posts (NEW)
+            blogPosts: prev.blogPosts.map(post => {
+                const translation = BLOG_CATALOG[post.id]?.[lang];
+                if (translation) {
+                    return { 
+                        ...post, 
+                        title: translation.title, 
+                        excerpt: translation.excerpt, 
+                        content: translation.content 
+                    };
+                }
+                return post;
+            })
+        }));
+    }
   }, [lang, isConfigLoaded]);
 
   const t = TRANSLATIONS[lang];
@@ -315,7 +356,7 @@ const App = () => {
             <div className="py-20 bg-white text-center px-4">
               <div className="max-w-4xl mx-auto">
                  <h2 className="text-3xl md:text-4xl font-serif mb-6">{t.sections.aboutTitle}</h2>
-                 <p className="text-gray-600 leading-relaxed mb-8 text-lg">Shenay Ileri, with years of expertise in the European beauty industry, brings you a unique blend of traditional artistry and modern technology.</p>
+                 <p className="text-gray-600 leading-relaxed mb-8 text-lg whitespace-pre-line">{siteConfig.aboutText}</p>
                  <button onClick={() => setView('about')} className="text-brand-gold font-bold uppercase tracking-widest text-xs border-b border-brand-gold pb-1 hover:text-black transition">{t.sections.readMore}</button>
               </div>
             </div>
