@@ -291,22 +291,32 @@ export interface InvoiceConfig {
 }
 
 export interface FirestoreSettings {
-  // Global (Shared)
-  siteImage?: string;
-  
-  // Turkish
+  // Global (Shared) Content Fields
+  siteTitle?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  heroVideo?: string;
+  aboutImage?: string;
+  aboutText?: string;
+  footerText?: string; // footerBio in SiteConfig
+  contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
+  newsletterTitle?: string;
+  newsletterText?: string;
+
+  // Language Specific Overrides (Optional fallback)
   siteTitle_tr?: string;
   heroTitle_tr?: string;
   siteSubtitle_tr?: string;
   siteContent_tr?: string;
   
-  // English
   siteTitle_en?: string;
   heroTitle_en?: string;
   siteSubtitle_en?: string;
   siteContent_en?: string;
 
-  // German
   siteTitle_de?: string;
   heroTitle_de?: string;
   siteSubtitle_de?: string;
