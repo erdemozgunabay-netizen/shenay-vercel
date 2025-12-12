@@ -1,15 +1,6 @@
 
 
-
-
-
-
-
-
-
-
-
-import { Translations, AdBanner, Service, Product, BlogPost } from './types';
+import { Translations, AdBanner, Service, Product, BlogPost, GalleryItem } from './types';
 
 export const INSTAGRAM_LINK = "https://instagram.com/shenayileri";
 export const PHONE_NUMBER = "017663195289";
@@ -30,18 +21,24 @@ export const TRANSLATIONS: Translations = {
       blog: "Blog",
       about: "About",
       app: "AI Beauty",
-      portfolio: "Portfolio",
+      gallery: "Gallery",
+      contact: "Contact",
       admin: "Admin"
     },
     hero: {
       title: "Reveal Your True Beauty",
       subtitle: "Professional artistry meets Artificial Intelligence. Discover the perfect makeup for your unique face shape with Shenay Ileri.",
-      cta: "Try AI Analysis",
+      cta: "Book Appointment",
+      aiBtn: "Try AI Analysis",
+      instagramBtn: "Follow on Instagram",
       instagram: "Follow on Instagram"
     },
     contact: {
         title: "Contact & Booking",
-        phone: "Tel"
+        phone: "Phone",
+        email: "Email",
+        address: "Address",
+        whatsapp: "WhatsApp"
     },
     payment: {
       title: "Bank Transfer Payment",
@@ -95,7 +92,11 @@ export const TRANSLATIONS: Translations = {
         special: "Special Event Makeup",
         skincare: "Skin Care",
         brows: "Brow Design"
-      }
+      },
+      galleryTitle: "Portfolio & Gallery",
+      contactTitle: "Get in Touch",
+      testimonialsTitle: "Client Testimonials",
+      teamTitle: "Meet Our Team"
     },
     cart: {
       title: "My Shopping Bag",
@@ -165,20 +166,26 @@ export const TRANSLATIONS: Translations = {
       products: "Ürünler",
       booking: "Randevu",
       blog: "Blog",
-      about: "Hakkında",
+      about: "Hakkımda",
       app: "AI Analiz",
-      portfolio: "Portföy",
+      gallery: "Galeri",
+      contact: "İletişim",
       admin: "Yönetim"
     },
     hero: {
       title: "Gerçek Güzelliğinizi Ortaya Çıkarın",
       subtitle: "Profesyonel sanat Yapay Zeka ile buluşuyor. Shenay İleri ile yüz şeklinize en uygun makyajı keşfedin.",
-      cta: "AI Analizini Dene",
+      cta: "Randevu Al",
+      aiBtn: "AI Analizini Dene",
+      instagramBtn: "Instagram'da Takip Et",
       instagram: "Instagram'da Takip Et"
     },
     contact: {
         title: "İletişim & Randevu",
-        phone: "Tel"
+        phone: "Tel",
+        email: "E-posta",
+        address: "Adres",
+        whatsapp: "WhatsApp"
     },
     payment: {
       title: "Ödeme Yöntemi: Banka Havalesi",
@@ -232,7 +239,11 @@ export const TRANSLATIONS: Translations = {
         special: "Özel Gün Makyajı",
         skincare: "Cilt Bakımı",
         brows: "Kaş Tasarım"
-      }
+      },
+      galleryTitle: "Portföy & Galeri",
+      contactTitle: "Bize Ulaşın",
+      testimonialsTitle: "Müşterilerimiz Ne Diyor?",
+      teamTitle: "Ekibimizle Tanışın"
     },
     cart: {
       title: "Sepetim",
@@ -304,18 +315,24 @@ export const TRANSLATIONS: Translations = {
       blog: "Blog",
       about: "Über Uns",
       app: "AI Analyse",
-      portfolio: "Portfolio",
+      gallery: "Galerie",
+      contact: "Kontakt",
       admin: "Admin"
     },
     hero: {
       title: "Entfalten Sie Ihre Wahre Schönheit",
       subtitle: "Professionelle Kunst trifft auf künstliche Intelligenz. Entdecken Sie mit Shenay Ileri das perfekte Make-up.",
-      cta: "AI-Analyse Starten",
+      cta: "Termin buchen",
+      aiBtn: "AI-Analyse testen",
+      instagramBtn: "Auf Instagram folgen",
       instagram: "Folgen Sie auf Instagram"
     },
     contact: {
         title: "Kontakt & Buchung",
-        phone: "Tel"
+        phone: "Telefon",
+        email: "E-Mail",
+        address: "Adresse",
+        whatsapp: "WhatsApp"
     },
     payment: {
       title: "Zahlung per Banküberweisung",
@@ -369,7 +386,11 @@ export const TRANSLATIONS: Translations = {
         special: "Besonderes Event Make-up",
         skincare: "Hautpflege",
         brows: "Augenbrauendesign"
-      }
+      },
+      galleryTitle: "Portfolio & Galerie",
+      contactTitle: "Kontaktieren Sie uns",
+      testimonialsTitle: "Kundenbewertungen",
+      teamTitle: "Unser Team"
     },
     cart: {
       title: "Warenkorb",
@@ -427,7 +448,7 @@ export const TRANSLATIONS: Translations = {
       technique: "Technik",
       symmetry: "Symmetrie",
       eyeShape: "Augenform",
-      option: "Option",
+      option: "Seçenek",
       emptyProducts: "Keine speziellen Produkte erforderlich.",
       defaultFixes: "Ihre Gesichtszüge sind sehr ausgeglichen. Mit minimalen Akzenten können Sie Ihre natürliche Schönheit unterstreichen."
     }
@@ -449,100 +470,13 @@ export const MOCK_ADS: AdBanner[] = [
   }
 ];
 
-export const SERVICE_CATALOG: Record<number, Record<string, { title: string, description: string }>> = {
-  1: {
-    en: { title: "Bridal Makeup & Hair", description: "Flawless look for your special day. Trial and face analysis included." },
-    de: { title: "Braut Make-up & Haare", description: "Makelloser Look für Ihren besonderen Tag. Inklusive Probe und Gesichtsanalyse." },
-    tr: { title: "Gelin Makyajı & Saç", description: "En özel gününüzde kusursuz görünüm. Prova ve yüz analizi dahil." }
-  },
-  2: {
-    en: { title: "Aquafacial Skin Care", description: "Glowing skin with deep cleaning and hydration." },
-    de: { title: "Aquafacial Gesichtsbehandlung", description: "Strahlende Haut durch Tiefenreinigung und Feuchtigkeit." },
-    tr: { title: "Aquafacial Cilt Bakımı", description: "Derinlemesine temizlik ve nemlendirme ile ışıldayan bir cilt." }
-  },
-  3: {
-    en: { title: "Lash & Brow Lifting", description: "Professional touch for fuller brows and curled lashes." },
-    de: { title: "Wimpern & Augenbrauen Lifting", description: "Professioneller Touch für vollere Brauen und geschwungene Wimpern." },
-    tr: { title: "Lash & Brow Lifting", description: "Daha dolgun kaşlar ve kıvrık kirpikler için profesyonel dokunuş." }
-  },
-  4: {
-    en: { title: "Makeup Workshop", description: "Learn how to apply the best makeup for your face." },
-    de: { title: "Make-up Workshop", description: "Lernen Sie, das beste Make-up für Ihr Gesicht aufzutragen." },
-    tr: { title: "Makyaj Workshop", description: "Kendi yüzünüze en uygun makyajı yapmayı öğrenin." }
-  }
-};
-
-export const PRODUCT_CATALOG: Record<number, Record<string, { name: string, description: string }>> = {
-  1: {
-    en: { name: "Shenay Signature Red", description: "Matte finish, long-lasting red lipstick." },
-    de: { name: "Shenay Signature Red", description: "Matter, lang anhaltender roter Lippenstift." },
-    tr: { name: "Shenay Signature Red", description: "Mat bitişli, uzun süre kalıcı kırmızı ruj." }
-  },
-  2: {
-    en: { name: "Glow Serum", description: "Illuminating primer before makeup." },
-    de: { name: "Glow Serum", description: "Leuchtender Primer vor dem Make-up." },
-    tr: { name: "Glow Serum", description: "Makyaj öncesi aydınlatıcı baz." }
-  },
-  3: {
-    en: { name: "Contour Palette", description: "3-color contour palette suitable for all skin tones." },
-    de: { name: "Contour Palette", description: "3-Farben-Konturpalette für alle Hauttöne." },
-    tr: { name: "Contour Palette", description: "Her cilt tonuna uygun 3 renkli kontür paleti." }
-  }
-};
-
-export const BLOG_CATALOG: Record<number, Record<string, { title: string, excerpt: string, content: string }>> = {
-  1: {
-    tr: {
-      title: "2025 Gelin Makyajı Trendleri",
-      excerpt: "Bu sezonun öne çıkan doğal ışıltılar ve pastel tonları hakkında bilmeniz gerekenler.",
-      content: "2025 gelin makyajı trendlerinde doğallık ve ışıltı bir araya geliyor. Geçmiş yılların yoğun kontür uygulamaları ve mat bitişli fondötenleri yerini 'Glass Skin' görünümüne bırakıyor. Bu sezon gelinlerde en çok tercih edilecek stil, cildin kendi ışıltısını ortaya çıkaran ince yapılı ürünler ve krem allıklar olacak.\n\nGöz makyajında ise şeftali, pembe ve şampanya tonları hakimiyetini sürdürüyor. Abartılı takma kirpikler yerine, tekli kirpiklerle daha doğal ama etkileyici bakışlar hedefleniyor. Dudaklarda ise 'Glossy' bitişli nude rujlar ve hafif renkli parlatıcılar geri dönüyor.\n\nSaç trendlerinde ise sıkı topuzlar yerini dağınık, bohem örgülere ve doğal dalgalara bırakıyor. Aksesuar olarak inciler ve taze çiçekler ön planda."
-    },
-    en: {
-      title: "Bridal Makeup Trends 2025",
-      excerpt: "Everything you need to know about this season's natural glow and pastel tones.",
-      content: "In 2025 bridal makeup trends, naturalness and glow come together. Heavy contour applications and matte finish foundations of past years are leaving their place to the 'Glass Skin' look. The most preferred style for brides this season will be thin-structured products and cream blushes that reveal the skin's own radiance.\n\nIn eye makeup, peach, pink, and champagne tones continue their dominance. Instead of exaggerated false eyelashes, more natural but impressive looks are targeted with individual lashes. On the lips, 'Glossy' finish nude lipsticks and lightly colored glosses are returning.\n\nIn hair trends, tight buns are leaving their place to messy, bohemian braids and natural waves. Pearls and fresh flowers are at the forefront as accessories."
-    },
-    de: {
-      title: "Braut Make-up Trends 2025",
-      excerpt: "Alles, was Sie über den natürlichen Glanz und die Pastelltöne dieser Saison wissen müssen.",
-      content: "Bei den Braut-Make-up-Trends 2025 treffen Natürlichkeit und Glanz aufeinander. Starke Konturierungen und mattierende Foundations der vergangenen Jahre weichen dem 'Glass Skin'-Look. Der bevorzugte Stil für Bräute in dieser Saison werden Produkte mit leichter Textur und Creme-Rouges sein, die das eigene Strahlen der Haut zum Vorschein bringen.\n\nBeim Augen-Make-up dominieren weiterhin Pfirsich-, Rosa- und Champagnertöne. Statt übertriebener falscher Wimpern wird mit einzelnen Wimpern ein natürlicherer, aber dennoch eindrucksvoller Blick angestrebt. Auf den Lippen kehren 'Glossy'-Finish Nude-Lippenstifte und leicht getönte Glosse zurück.\n\nBei den Haartrends weichen strenge Dutts messigen, böhmischen Zöpfen und natürlichen Wellen. Als Accessoires stehen Perlen und frische Blumen im Vordergrund."
-    }
-  },
-  2: {
-    tr: {
-      title: "Kış Aylarında Cilt Bakımı",
-      excerpt: "Soğuk havalarda cildinizi korumanın 5 altın kuralı.",
-      content: "Kış ayları, soğuk hava ve rüzgarın etkisiyle cildin kurumasına, çatlamasına ve hassaslaşmasına neden olabilir. Bu dönemde cilt bakım rutininizi mevsime göre güncellemek hayati önem taşır.\n\n1. Nemlendirmeyi İhmal Etmeyin: Yazın kullandığınız su bazlı nemlendiriciler kışın yetersiz kalabilir. Daha yoğun, seramid ve hyaluronik asit içeren kremlere geçiş yapın.\n2. Güneş Koruyucu Kullanın: Kış güneşi de cilde zarar verir. Özellikle karlı havalarda UV ışınlarının yansıması cildi yakabilir. SPF 30+ koruyucu kullanmaya devam edin.\n3. Sıcak Sudan Kaçının: Çok sıcak suyla yüz yıkamak cildin doğal yağlarını yok eder. Ilık su tercih edin.\n4. Dudak Bakımı: Kuruyan dudaklar için yoğun onarıcı balmlar kullanın ve haftada bir peeling yapın.\n5. Bol Su İçin: Cildin nem dengesini korumak için içeriden de desteklemek gerekir. Günde en az 2 litre su tüketmeye özen gösterin."
-    },
-    en: {
-      title: "Winter Skin Care",
-      excerpt: "5 golden rules to protect your skin in cold weather.",
-      content: "Winter months can cause the skin to dry, crack, and become sensitive due to cold air and wind. It is vital to update your skincare routine according to the season during this period.\n\n1. Don't Neglect Moisturizing: Water-based moisturizers you use in summer may be insufficient in winter. Switch to more intense creams containing ceramides and hyaluronic acid.\n2. Use Sunscreen: Winter sun also damages the skin. Especially in snowy weather, the reflection of UV rays can burn the skin. Continue using SPF 30+ protection.\n3. Avoid Hot Water: Washing your face with very hot water destroys the skin's natural oils. Prefer lukewarm water.\n4. Lip Care: Use intense repairing balms for drying lips and peel once a week.\n5. Drink Plenty of Water: It is necessary to support from the inside to protect the moisture balance of the skin. Take care to consume at least 2 liters of water a day."
-    },
-    de: {
-      title: "Hautpflege im Winter",
-      excerpt: "5 goldene Regeln zum Schutz Ihrer Haut bei kaltem Wetter.",
-      content: "Die Wintermonate können durch kalte Luft und Wind dazu führen, dass die Haut austrocknet, rissig und empfindlich wird. In dieser Zeit ist es lebenswichtig, Ihre Hautpflegeroutine der Jahreszeit anzupassen.\n\n1. Vernachlässigen Sie nicht die Feuchtigkeitspflege: Wasserbasierte Feuchtigkeitscremes, die Sie im Sommer verwenden, können im Winter unzureichend sein. Wechseln Sie zu intensiveren Cremes mit Ceramiden und Hyaluronsäure.\n2. Verwenden Sie Sonnenschutz: Auch die Wintersonne schadet der Haut. Besonders bei Schneewetter kann die Reflexion der UV-Strahlen die Haut verbrennen. Verwenden Sie weiterhin SPF 30+ Schutz.\n3. Vermeiden Sie heißes Wasser: Das Waschen des Gesichts mit sehr heißem Wasser zerstört die natürlichen Öle der Haut. Bevorzugen Sie lauwarmes Wasser.\n4. Lippenpflege: Verwenden Sie intensive Reparaturbalsame für trockene Lippen und peelen Sie einmal pro Woche.\n5. Trinken Sie viel Wasser: Es ist notwendig, von innen zu unterstützen, um den Feuchtigkeitshaushalt der Haut zu schützen. Achten Sie darauf, täglich mindestens 2 Liter Wasser zu trinken."
-    }
-  },
-  3: {
-    tr: {
-      title: "Doğru Fondöten Seçimi",
-      excerpt: "Cilt alt tonunuza göre en doğru fondöteni nasıl seçersiniz?",
-      content: "Makyajın en önemli adımı kusursuz bir ten makyajıdır. Ancak yanlış fondöten seçimi tüm makyajı bozabilir. Doğru fondöteni seçmek için öncelikle cilt alt tonunuzu belirlemelisiniz.\n\n- Soğuk (Cool) Alt Ton: Damarlarınız mavi veya mor görünüyorsa, pembe alt tonlu fondötenler size uygundur.\n- Sıcak (Warm) Alt Ton: Damarlarınız yeşil görünüyorsa, sarı veya altın alt tonlu fondötenleri tercih etmelisiniz.\n- Nötr (Neutral) Alt Ton: Damarlarınız hem yeşil hem mavi görünüyorsa şanslısınız, bej tonları size çok yakışacaktır.\n\nAyrıca fondöten denerken el bileğinizde değil, boynunuz ile çene hattınızın birleştiği noktada deneme yapmalısınız. Doğru renk, cildinizde kaybolup giden renktir."
-    },
-    en: {
-      title: "Choosing the Right Foundation",
-      excerpt: "How to choose the right foundation according to your skin undertone?",
-      content: "The most important step of makeup is a flawless complexion. However, choosing the wrong foundation can ruin the whole makeup. To choose the right foundation, you must first determine your skin undertone.\n\n- Cool Undertone: If your veins look blue or purple, pink undertone foundations are suitable for you.\n- Warm Undertone: If your veins look green, you should prefer yellow or gold undertone foundations.\n- Neutral Undertone: If your veins look both green and blue, you are lucky, beige tones will suit you very well.\n\nAlso, when trying foundation, you should test it not on your wrist, but at the point where your neck and jawline meet. The right color is the color that disappears into your skin."
-    },
-    de: {
-      title: "Die Wahl der richtigen Foundation",
-      excerpt: "Wie wählen Sie die richtige Foundation entsprechend Ihrem Hautunterton aus?",
-      content: "Der wichtigste Schritt beim Make-up ist ein makelloser Teint. Die Wahl der falschen Foundation kann jedoch das gesamte Make-up ruinieren. Um die richtige Foundation zu wählen, müssen Sie zunächst Ihren Hautunterton bestimmen.\n\n- Kühler (Cool) Unterton: Wenn Ihre Adern blau oder lila aussehen, sind Foundations mit rosa Unterton für Sie geeignet.\n- Warmer (Warm) Unterton: Wenn Ihre Adern grün aussehen, sollten Sie gelbe oder goldene Untertöne bevorzugen.\n- Neutraler (Neutral) Unterton: Wenn Ihre Adern sowohl grün als auch blau aussehen, haben Sie Glück, Beigetöne werden Ihnen sehr gut stehen.\n\nAußerdem sollten Sie Foundation nicht am Handgelenk testen, sondern an der Stelle, an der Hals und Kieferlinie zusammentreffen. Die richtige Farbe ist die Farbe, die in Ihrer Haut verschwindet."
-    }
-  }
-};
+export const GALLERY_ITEMS: GalleryItem[] = [
+    { id: 1, image: "https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?q=80&w=2036&auto=format&fit=crop", caption: "Gelin Makyajı" },
+    { id: 2, image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=2070&auto=format&fit=crop", caption: "Soft Glam" },
+    { id: 3, image: "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069&auto=format&fit=crop", caption: "Editorial" },
+    { id: 4, image: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=2070&auto=format&fit=crop", caption: "Cilt Bakımı" },
+    { id: 5, image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=2070&auto=format&fit=crop", caption: "Workshop" }
+];
 
 export const SERVICES: Service[] = [
   {

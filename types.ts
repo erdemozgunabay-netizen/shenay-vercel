@@ -11,17 +11,23 @@ export interface TranslationStructure {
     about: string;
     app: string;
     admin: string;
-    portfolio: string;
+    gallery: string;
+    contact: string;
   };
   hero: {
     title: string;
     subtitle: string;
     cta: string;
+    aiBtn: string;
+    instagramBtn: string;
     instagram: string;
   };
   contact: {
       title: string;
       phone: string;
+      email: string;
+      address: string;
+      whatsapp: string;
   };
   payment: {
     title: string;
@@ -72,6 +78,10 @@ export interface TranslationStructure {
       skincare: string;
       brows: string;
     };
+    galleryTitle: string;
+    contactTitle: string;
+    testimonialsTitle: string;
+    teamTitle: string;
   };
   cart: {
     title: string;
@@ -201,18 +211,20 @@ export interface AdBanner {
   id: number;
   imageUrl: string;
   title: string;
-  link: string;
-  orderCount?: number; 
-  voteCount?: number; 
+  subtitle?: string;
+  link?: string;
 }
 
+// Ensure ID is number for backward compatibility, but Firestore uses strings usually.
+// We will handle string/number conversion in services.
 export interface Service {
-  id: number;
+  id: number; 
   title: string;
   description: string;
   longDescription?: string;
   gallery?: string[];
   image: string;
+  price?: string;
 }
 
 export interface Product {
@@ -223,7 +235,8 @@ export interface Product {
   image: string;
   rating: number;
   orderCount: number; 
-  voteCount: number;  
+  voteCount: number; 
+  stock?: number; 
 }
 
 export interface CartItem extends Product {
@@ -238,6 +251,30 @@ export interface BlogPost {
   date: string;
   image: string;
   gallery?: string[];
+}
+
+export interface GalleryItem {
+  id: number;
+  image: string;
+  caption?: string;
+  category?: string;
+}
+
+export interface Testimonial {
+    id: number;
+    name: string;
+    quote: string;
+    rating: number;
+    image?: string;
+}
+
+export interface TeamMember {
+    id: number;
+    name: string;
+    role: string;
+    bio?: string;
+    image: string;
+    instagram?: string;
 }
 
 export interface CustomerDetails {
@@ -268,6 +305,7 @@ export interface Appointment {
   service: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   createdAt: string;
+  notes?: string;
 }
 
 export interface PaymentConfig {
@@ -281,6 +319,21 @@ export interface InvoiceConfig {
   taxId: string; 
   vatId: string; 
   jurisdiction: string; 
+  companyName?: string;
+  companyAddress?: string;
+}
+
+export interface Invoice {
+  id: string; // Fatura No
+  date: string; // Fatura Tarihi
+  customerName: string;
+  customerAddress: string;
+  items: { desc: string; price: number; vat: number }[];
+  totalNet: number;
+  totalVat: number;
+  totalGross: number;
+  taxId: string;
+  vatId: string;
 }
 
 export interface FirestoreSettings {
@@ -338,6 +391,10 @@ export interface SiteConfig {
   services: Service[];
   products: Product[];
   blogPosts: BlogPost[];
+  gallery: GalleryItem[];
+  testimonials: Testimonial[];
+  team: TeamMember[];
+  
   orders: Order[];
   appointments: Appointment[]; 
   

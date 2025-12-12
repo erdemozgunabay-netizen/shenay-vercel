@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { TRANSLATIONS, MOCK_ADS, HERO_IMAGE, ABOUT_IMAGE, DEFAULT_ABOUT_TEXT, INSTAGRAM_LINK, PHONE_NUMBER, SERVICES, PRODUCTS, BLOG_POSTS, RETURN_POLICIES, SERVICE_CATALOG, PRODUCT_CATALOG, BLOG_CATALOG } from './constants';
-import { LanguageCode, SiteConfig, Order, CartItem, Product, CustomerDetails, ReturnRequest, Appointment, FirestoreSettings } from './types';
+import React, { useState, useEffect } from 'react';
+import { TRANSLATIONS, MOCK_ADS, HERO_IMAGE, ABOUT_IMAGE, DEFAULT_ABOUT_TEXT, INSTAGRAM_LINK, PHONE_NUMBER, SERVICES, PRODUCTS, BLOG_POSTS, RETURN_POLICIES, GALLERY_ITEMS } from './constants';
+import { LanguageCode, SiteConfig, Order, CartItem, Product, CustomerDetails, ReturnRequest, Appointment } from './types';
 import { AdminDashboard } from './components/AdminDashboard';
-import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSection, ReturnsSection, ServiceDetail, BlogDetail } from './components/SiteSections';
+import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSection, ReturnsSection, ServiceDetail, BlogDetail, GallerySection, ContactSection, TestimonialsSection, TeamSection } from './components/SiteSections';
 import { MakeupAnalyzer } from './components/MakeupAnalyzer';
 import { CartDrawer } from './components/CartDrawer';
 import { PaymentModal } from './components/PaymentModal';
-import { storageService, subscribeToSettings, subscribeToOrders, saveOrderToFirestore } from './services/storageService';
+import { storageService } from './services/storageService';
 import { authService } from './services/authService';
-import { Menu, Globe, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Video, RefreshCw } from 'lucide-react';
+import { Menu, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Sparkles } from 'lucide-react';
 
-// Initial mocks used if storage is empty
 const INITIAL_CONFIG: SiteConfig = {
   siteTitle: "", 
   heroTitle: TRANSLATIONS['tr'].hero.title,
@@ -30,6 +29,9 @@ const INITIAL_CONFIG: SiteConfig = {
   services: SERVICES,
   products: PRODUCTS,
   blogPosts: BLOG_POSTS,
+  gallery: GALLERY_ITEMS,
+  testimonials: [],
+  team: [],
   orders: [],
   appointments: [],
   paymentConfig: {
@@ -41,137 +43,100 @@ const INITIAL_CONFIG: SiteConfig = {
   invoiceConfig: {
     taxId: "123/456/789",
     vatId: "DE 123 456 789",
-    jurisdiction: "Berlin"
+    jurisdiction: "Berlin",
+    companyName: "Shenay Ileri Beauty",
+    companyAddress: "Example Street, Berlin"
   }
 };
 
 const App = () => {
   const [lang, setLang] = useState<LanguageCode>('tr'); 
-  const [view, setView] = useState<'home' | 'services' | 'products' | 'booking' | 'blog' | 'about' | 'app' | 'admin' | 'returns' | 'service-detail' | 'blog-detail' | 'portfolio'>('home');
+  const [view, setView] = useState<'home' | 'services' | 'products' | 'booking' | 'blog' | 'about' | 'app' | 'admin' | 'returns' | 'service-detail' | 'blog-detail' | 'portfolio' | 'gallery' | 'contact'>('home');
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartPaymentOpen, setIsCartPaymentOpen] = useState(false);
   const [tempCustomerDetails, setTempCustomerDetails] = useState<CustomerDetails | null>(null);
-  
-  // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  
-  // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Site Configuration
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_CONFIG);
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
-  const [isTitleLoaded, setIsTitleLoaded] = useState(false);
-  
-  // Connection Refresh State for Mobile
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
 
-  // Authentication Listener
   useEffect(() => {
-    const unsubscribe = authService.observeAuth(async (status, user) => {
-        setIsAuthenticated(status);
-    });
-    return () => unsubscribe();
+    authService.observeAuth((status) => setIsAuthenticated(status));
   }, []);
 
-  // --- MOBILE VISIBILITY LISTENER ---
+  // CMS LISTENERS
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setLastRefresh(Date.now());
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  // --- REAL-TIME LISTENERS ---
-
-  // 1. Listen for Site Settings (Firestore - ALL Content)
-  // This runs for EVERYONE (including anonymous users)
-  useEffect(() => {
-    const unsubscribe = subscribeToSettings(
-        (settings) => {
-            const currentT = TRANSLATIONS[lang];
-            // Use defaults if Firestore is empty for a field
-            const db = settings || {};
-
-            setSiteConfig(prev => ({ 
-                ...prev, 
-                rawSettings: settings || prev.rawSettings,
-                // Map generic fields first, allow lang overrides if implemented later
-                // If db value is empty string or null, fall back to currentT or prev
-                siteTitle: db.siteTitle || prev.siteTitle,
-                heroTitle: db.heroTitle || currentT.hero.title,
-                heroSubtitle: db.heroSubtitle || currentT.hero.subtitle,
-                heroImage: db.heroImage || prev.heroImage,
-                heroVideo: db.heroVideo || prev.heroVideo,
-                aboutImage: db.aboutImage || prev.aboutImage,
-                aboutText: db.aboutText || currentT.sections.aboutText,
-                footerBio: db.footerText || prev.footerBio,
-                contactEmail: db.contactEmail || prev.contactEmail,
-                contactPhone: db.contactPhone || prev.contactPhone,
-                contactAddress: db.contactAddress || prev.contactAddress,
-                newsletterTitle: db.newsletterTitle || prev.newsletterTitle,
-                newsletterText: db.newsletterText || prev.newsletterText
-            }));
-            setIsTitleLoaded(true);
-        },
-        (error) => {
-            if (error.code !== 'permission-denied') {
-                console.warn("App Settings Listener Error:", error);
-            }
-        }
-    );
-    return () => unsubscribe();
-  }, [lang, lastRefresh]); 
-
-  // 2. Listen for Orders (Firestore) - ADMIN ONLY
-  useEffect(() => {
-      if (!isAuthenticated) return; // Only listen if logged in
-
-      const unsubscribe = subscribeToOrders((orders) => {
-          setSiteConfig(prev => ({ ...prev, orders: orders }));
-      });
-      return () => { if(unsubscribe) unsubscribe(); };
-  }, [isAuthenticated, lastRefresh]);
-
-  // 3. Listen for Legacy Realtime DB (Products/Services fallback/init)
-  useEffect(() => {
-    const unsubscribe = storageService.subscribe((data) => {
-      if (data) {
-        setSiteConfig(prev => ({
-          ...INITIAL_CONFIG, 
-          ...data,
-          // Firestore overrides take precedence for content fields
-          siteTitle: prev.siteTitle,
-          heroTitle: prev.heroTitle, 
-          heroSubtitle: prev.heroSubtitle,
-          heroImage: prev.heroImage,
-          aboutImage: prev.aboutImage,
-          aboutText: prev.aboutText,
-          footerBio: prev.footerBio,
-          contactEmail: prev.contactEmail,
-          // Merge arrays
-          orders: prev.orders.length > 0 ? prev.orders : (data.orders || []),
-          appointments: data.appointments || []
+    // 1. Settings
+    const unsubSettings = storageService.subscribeToSettings((settings) => {
+        const db = settings || {};
+        const currentT = TRANSLATIONS[lang];
+        setSiteConfig(prev => ({ 
+            ...prev, 
+            rawSettings: settings || prev.rawSettings,
+            siteTitle: db.siteTitle || prev.siteTitle,
+            heroTitle: db.heroTitle || currentT.hero.title,
+            heroImage: db.heroImage || prev.heroImage,
+            aboutText: db.aboutText || currentT.sections.aboutText,
+            aboutImage: db.aboutImage || prev.aboutImage,
+            contactPhone: db.contactPhone || prev.contactPhone,
+            contactEmail: db.contactEmail || prev.contactEmail,
+            contactAddress: db.contactAddress || prev.contactAddress
         }));
-      }
-      setIsConfigLoaded(true);
     });
+
+    // 2. Collections (Public Read)
+    const unsubServices = storageService.subscribeToServices((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, services: data }));
+    });
+    const unsubProducts = storageService.subscribeToProducts((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, products: data }));
+    });
+    const unsubBlog = storageService.subscribeToBlog((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, blogPosts: data }));
+    });
+    const unsubGallery = storageService.subscribeToGallery((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, gallery: data }));
+    });
+    const unsubTestimonials = storageService.subscribeToTestimonials((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, testimonials: data }));
+    });
+    const unsubTeam = storageService.subscribeToTeam((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, team: data }));
+    });
+    const unsubBanners = storageService.subscribeToBanners((data) => {
+        if(data?.length) setSiteConfig(prev => ({ ...prev, ads: data }));
+    });
+
+    // 3. Admin Only Collections
+    let unsubOrders: any;
+    let unsubAppointments: any;
+    
+    if (isAuthenticated) {
+        unsubOrders = storageService.subscribeToOrders((data) => {
+            setSiteConfig(prev => ({ ...prev, orders: data }));
+        });
+        unsubAppointments = storageService.subscribeToAppointments((data) => {
+            setSiteConfig(prev => ({ ...prev, appointments: data }));
+        });
+    }
 
     return () => {
-      if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+        unsubSettings();
+        unsubServices();
+        unsubProducts();
+        unsubBlog();
+        unsubGallery();
+        unsubTestimonials();
+        unsubTeam();
+        unsubBanners();
+        if(unsubOrders) unsubOrders();
+        if(unsubAppointments) unsubAppointments();
     };
-  }, [lastRefresh]);
+  }, [lang, isAuthenticated]);
 
-  // Logout Wrapper
   const handleLogout = async () => {
       await authService.logout();
       setIsAuthenticated(false);
@@ -180,29 +145,22 @@ const App = () => {
 
   const t = TRANSLATIONS[lang];
 
-  // ... (Cart and other handlers kept same for brevity, unchanged)
+  // Cart & Logic Handlers
   const addToCart = (product: Product) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...prev, { ...product, quantity: 1 }];
+      return existing 
+        ? prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)
+        : [...prev, { ...product, quantity: 1 }];
     });
     setIsCartOpen(true);
   };
-  const removeFromCart = (id: number) => { setCart(prev => prev.filter(item => item.id !== id)); };
+  const removeFromCart = (id: number) => setCart(prev => prev.filter(item => item.id !== id));
   const updateCartQuantity = (id: number, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) { return { ...item, quantity: Math.max(1, item.quantity + delta) }; }
-      return item;
-    }));
+    setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
   };
-  const calculateCartTotal = () => {
-    const parsePrice = (priceStr: string) => parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
-    return cart.reduce((sum, item) => sum + (parsePrice(item.price) * item.quantity), 0);
-  };
-  const handleCartCheckout = (details: CustomerDetails) => { setTempCustomerDetails(details); setIsCartOpen(false); setIsCartPaymentOpen(true); };
+  const calculateCartTotal = () => cart.reduce((sum, item) => sum + ((parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0) * item.quantity), 0);
+  
   const handleCartPaymentSuccess = async () => {
       if (!tempCustomerDetails) return;
       const totalAmount = "€" + calculateCartTotal().toFixed(2);
@@ -214,45 +172,37 @@ const App = () => {
           status: 'pending',
           date: new Date().toISOString().split('T')[0]
       };
-      
-      // Save order to Firestore Collection
-      await saveOrderToFirestore(newOrder);
-
-      // Note: We rely on the Admin listener to update the 'orders' list in siteConfig if authenticated.
-      // For public users, we just clear the cart and show success.
+      await storageService.saveOrderToFirestore(newOrder);
       setShowSuccessModal(true); setCart([]); setIsCartPaymentOpen(false); setTempCustomerDetails(null);
   };
-  const handleRateProduct = (id: number, rating: number) => {
-    const newConfigUpdater = (prev: SiteConfig) => ({
-      ...prev, products: prev.products.map(p => {
-        if (p.id === id) {
-            const newCount = p.voteCount + 1;
-            const newRating = ((p.rating * p.voteCount) + rating) / newCount;
-            return { ...p, rating: newRating, voteCount: newCount };
+
+  const handleBookAppointment = async (appt: any) => {
+      const newAppt: Appointment = {
+          id: Date.now(),
+          ...appt,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+      };
+      await storageService.addAppointment(newAppt);
+  };
+
+  const handleServiceClick = (id: number) => { setSelectedServiceId(id); setView('service-detail'); window.scrollTo(0,0); };
+  const handlePostClick = (id: number) => { setSelectedPostId(id); setView('blog-detail'); window.scrollTo(0,0); };
+
+  const NavButton = ({ targetView, label }: any) => (
+    <button 
+      onClick={() => { setView(targetView); setMobileMenuOpen(false); }} 
+      className={`
+        transition-all duration-300
+        text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded border
+        ${view === targetView 
+          ? 'bg-brand-gold text-white border-brand-gold shadow-sm' 
+          : 'text-brand-dark border-brand-gold hover:bg-brand-gold hover:text-white'
         }
-        return p;
-      })
-    });
-    const newConfig = newConfigUpdater(siteConfig);
-    setSiteConfig(newConfig); 
-    storageService.save(newConfig); 
-  };
-  const handleReturnRequest = (request: ReturnRequest) => {
-      // Logic for return request (typically requires finding order first, simplified here)
-      alert("İade talebiniz başarıyla alındı.");
-  };
-  const handleBooking = (appointmentData: Omit<Appointment, 'id' | 'status' | 'createdAt'>) => {
-    const newAppointment: Appointment = { ...appointmentData, id: Date.now(), status: 'pending', createdAt: new Date().toISOString().split('T')[0] };
-    const newConfigUpdater = (prev: SiteConfig) => ({ ...prev, appointments: [newAppointment, ...(prev.appointments || [])] });
-    const newConfig = newConfigUpdater(siteConfig);
-    setSiteConfig(newConfig); 
-    storageService.save(newConfig);
-    return true; 
-  };
-  const handleServiceClick = (id: number) => { setSelectedServiceId(id); setView('service-detail'); window.scrollTo(0, 0); };
-  const handlePostClick = (id: number) => { setSelectedPostId(id); setView('blog-detail'); window.scrollTo(0, 0); };
-  const NavButton = ({ targetView, label }: { targetView: typeof view, label: string }) => (
-    <button onClick={() => { setView(targetView); setMobileMenuOpen(false); }} className={`hover:text-brand-gold transition duration-300 uppercase tracking-widest text-xs font-bold py-2 ${view === targetView ? 'text-brand-dark border-b-2 border-brand-gold' : 'text-gray-500'}`}>{label}</button>
+      `}
+    >
+      {label}
+    </button>
   );
 
   const renderView = () => {
@@ -260,226 +210,139 @@ const App = () => {
       case 'app': return <MakeupAnalyzer t={t.app} paymentT={t.payment} lang={lang} paymentConfig={siteConfig.paymentConfig} />;
       case 'admin': return <AdminDashboard t={t.admin} siteConfig={siteConfig} setSiteConfig={setSiteConfig} isAuthenticated={isAuthenticated} onLogin={() => setIsAuthenticated(true)} onLogout={handleLogout} />;
       case 'services': return <ServicesSection t={t.sections} services={siteConfig.services} onServiceClick={handleServiceClick} />;
-      case 'products': return <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={handleRateProduct} onReturnClick={() => setView('returns')} />;
-      case 'booking': return <BookingSection t={t.sections} onBook={handleBooking} />;
+      case 'products': return <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} />;
+      case 'booking': return <BookingSection t={t.sections} onBook={handleBookAppointment} />;
       case 'blog': return <BlogSection t={t.sections} posts={siteConfig.blogPosts} onPostClick={handlePostClick} />;
       case 'about': return <AboutSection t={t.sections} image={siteConfig.aboutImage} text={siteConfig.aboutText} />;
-      case 'returns': return <ReturnsSection t={t.returns} policyText={RETURN_POLICIES[lang]} onRequestSubmit={handleReturnRequest} />;
-      case 'service-detail': {
-          const service = siteConfig.services.find(s => s.id === selectedServiceId);
-          if (!service) return <ServicesSection t={t.sections} services={siteConfig.services} onServiceClick={handleServiceClick} />;
-          return <ServiceDetail service={service} onBack={() => setView('services')} onBookNow={() => setView('booking')} />;
-      }
-      case 'blog-detail': {
-          const post = siteConfig.blogPosts.find(p => p.id === selectedPostId);
-          if (!post) return <BlogSection t={t.sections} posts={siteConfig.blogPosts} onPostClick={handlePostClick} />;
-          return <BlogDetail post={post} onBack={() => setView('blog')} />;
-      }
-      case 'portfolio':
-        return (
-          <div className="py-20 text-center">
-             <h2 className="text-4xl font-serif mb-6 gold-text-shadow">Portfolio</h2>
-             <p className="text-gray-500">Gallery coming soon...</p>
-             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto px-4">
-                 {siteConfig.services.slice(0, 4).map(s => (<div key={s.id} className="aspect-square rounded-lg overflow-hidden"><img src={s.image} className="w-full h-full object-cover hover:scale-110 transition duration-700" /></div>))}
-             </div>
-          </div>
-        );
-      case 'home':
-      default:
-        return (
+      case 'gallery': return <GallerySection t={t.sections} items={siteConfig.gallery} />;
+      case 'contact': return <ContactSection t={t.contact} config={siteConfig} />;
+      case 'returns': return <ReturnsSection t={t.returns} policyText={RETURN_POLICIES[lang]} onRequestSubmit={()=>{alert("Talep alındı")}} />;
+      case 'service-detail': return <ServiceDetail service={siteConfig.services.find(s=>s.id===selectedServiceId)!} onBack={()=>setView('services')} onBookNow={()=>setView('booking')} />;
+      case 'blog-detail': return <BlogDetail post={siteConfig.blogPosts.find(p=>p.id===selectedPostId)!} onBack={()=>setView('blog')} />;
+      default: return (
           <>
-            <div className="relative h-[85vh] w-full bg-black overflow-hidden">
-              {siteConfig.heroVideo ? (
-                <video src={siteConfig.heroVideo} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-80" />
-              ) : (
-                <img src={siteConfig.heroImage} alt="Shenay Ileri" className="absolute inset-0 w-full h-full object-cover opacity-80 animate-fade-in" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex items-center">
-                <div className="max-w-7xl mx-auto px-6 w-full">
-                  <div className="max-w-2xl text-white">
-                    <h1 className="text-5xl md:text-7xl font-serif mb-6 leading-tight animate-fade-in-up gold-text-shadow">
-                      {siteConfig.heroTitle}
-                    </h1>
-                    <p className="text-lg md:text-xl text-gray-200 mb-8 font-light tracking-wide max-w-lg">
-                      {siteConfig.heroSubtitle}
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <button onClick={() => setView('app')} className="bg-brand-gold hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-bold uppercase tracking-wider transition-all duration-300 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]">{t.hero.cta}</button>
-                      <a href={INSTAGRAM_LINK} target="_blank" rel="noreferrer" className="border-2 border-white hover:bg-white hover:text-black text-white px-10 py-4 rounded-full font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2"><Instagram size={20} />{t.hero.instagram}</a>
+            <div className="relative h-[85vh] bg-black">
+              {siteConfig.heroVideo ? <video src={siteConfig.heroVideo} autoPlay loop muted className="absolute inset-0 w-full h-full object-cover opacity-80" /> : <img src={siteConfig.heroImage} className="absolute inset-0 w-full h-full object-cover opacity-80" />}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-center px-4">
+                  <div className="max-w-3xl text-white">
+                      <h1 className="text-5xl md:text-7xl font-serif mb-6 gold-text-shadow">{siteConfig.heroTitle}</h1>
+                      <p className="text-xl mb-8 font-light">{siteConfig.heroSubtitle}</p>
+                      <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-8">
+                          {/* Book */}
+                          <button onClick={()=>setView('booking')} className="bg-brand-gold text-white px-8 py-3 rounded-full font-bold uppercase tracking-wider hover:bg-white hover:text-black transition shadow-lg">{t.hero.cta}</button>
+                          
+                          {/* AI */}
+                          <button onClick={()=>setView('app')} className="bg-white text-brand-dark border border-brand-gold px-8 py-3 rounded-full font-bold uppercase tracking-wider hover:bg-brand-gold hover:text-white transition shadow-lg">{t.hero.aiBtn}</button>
+                          
+                          {/* Insta */}
+                          <a href={INSTAGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-transparent text-white border border-white/50 px-8 py-3 rounded-full font-bold uppercase tracking-wider hover:bg-white hover:text-black transition shadow-lg backdrop-blur-sm">
+                              <Instagram size={18} /> {t.hero.instagramBtn}
+                          </a>
+                      </div>
+                  </div>
+              </div>
+            </div>
+            
+            {/* AI Makeup Analyzer Section - Integrated */}
+            <div className="bg-gradient-to-r from-rose-50 to-white py-20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold/10 rounded-full blur-3xl -z-10"></div>
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-center gap-12">
+                        <div className="md:w-1/2 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 bg-brand-dark text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                                <Sparkles size={14} className="text-brand-gold" /> AI Powered Beauty
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-serif mb-6 text-brand-dark">Sanal Güzellik Danışmanınız</h2>
+                            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                                Yapay zeka destekli analiz aracımızla yüz şeklinizi, cilt tonunuzu ve size en çok yakışan renkleri keşfedin. Fotoğrafınızı yükleyin, profesyonel öneriler anında cebinize gelsin.
+                            </p>
+                            <button onClick={()=>setView('app')} className="bg-brand-dark text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition shadow-lg flex items-center gap-3 mx-auto md:mx-0">
+                                <Sparkles size={20} /> Ücretsiz Analiz Başlat
+                            </button>
+                        </div>
+                        <div className="md:w-1/2">
+                            {/* Mockup / Teaser Visual */}
+                            <div className="relative">
+                                <img src="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=2070&auto=format&fit=crop" className="rounded-2xl shadow-2xl border-4 border-white" alt="AI Analysis" />
+                                <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-xl border border-gray-100 flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                        <CheckCircle size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-brand-dark">Kişisel Rapor</div>
+                                        <div className="text-xs text-gray-500">%98 Eşleşme Başarısı</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
             </div>
+
             <div className="py-20 bg-white text-center px-4">
-              <div className="max-w-4xl mx-auto">
-                 <h2 className="text-3xl md:text-4xl font-serif mb-6">{t.sections.aboutTitle}</h2>
-                 <p className="text-gray-600 leading-relaxed mb-8 text-lg whitespace-pre-line">{siteConfig.aboutText}</p>
-                 <button onClick={() => setView('about')} className="text-brand-gold font-bold uppercase tracking-widest text-xs border-b border-brand-gold pb-1 hover:text-black transition">{t.sections.readMore}</button>
-              </div>
+                <h2 className="text-3xl font-serif mb-6 text-brand-dark">{t.sections.aboutTitle}</h2>
+                <p className="max-w-3xl mx-auto text-gray-600 leading-relaxed text-lg whitespace-pre-line">{siteConfig.aboutText}</p>
             </div>
-            <div className="py-16 bg-[#FDFBF7]">
-               <div className="max-w-7xl mx-auto px-6">
-                  <div className="flex justify-between items-end mb-10">
-                     <h2 className="text-3xl font-serif">{t.sections.servicesTitle}</h2>
-                     <button onClick={() => setView('services')} className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-brand-dark transition">{t.sections.readMore} <ArrowRight size={16} /></button>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-6">
-                     {siteConfig.services.slice(0, 3).map(service => (
-                       <div key={service.id} className="group relative h-64 overflow-hidden rounded-xl cursor-pointer" onClick={() => handleServiceClick(service.id)}>
-                          <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-end p-6">
-                             <h3 className="text-white font-serif text-xl font-bold">{service.title}</h3>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-               </div>
-            </div>
+            
+            <ServicesSection t={t.sections} services={siteConfig.services} onServiceClick={handleServiceClick} />
+            
+            <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} />
+            
+            <TestimonialsSection t={t.sections} testimonials={siteConfig.testimonials} />
+
+            <TeamSection t={t.sections} team={siteConfig.team} />
+
+            <BlogSection t={t.sections} posts={siteConfig.blogPosts} onPostClick={handlePostClick} />
           </>
-        );
+      );
     }
   };
 
-  // Wait for Firestore Title before rendering
-  if (!isTitleLoaded && !isConfigLoaded) {
-      return (
-          <div className="h-screen flex flex-col items-center justify-center bg-brand-light">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-brand-gold mb-4"></div>
-              <p className="text-gray-500 animate-pulse font-serif">Loading Beauty...</p>
-          </div>
-      );
-  }
-
   return (
-    <div className="min-h-screen font-sans text-brand-dark flex flex-col">
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-           <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl scale-100">
-               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle size={40} strokeWidth={2.5} />
+    <div className="min-h-screen font-sans text-brand-dark flex flex-col bg-[#FAFAFA]">
+       {showSuccessModal && <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"><div className="bg-white p-8 rounded-3xl text-center max-w-sm"><CheckCircle size={48} className="text-green-500 mx-auto mb-4" /><h2 className="text-2xl font-bold mb-2">{t.cart.orderSuccessTitle}</h2><button onClick={()=>setShowSuccessModal(false)} className="w-full bg-black text-white py-3 rounded-lg font-bold mt-4">OK</button></div></div>}
+       <CartDrawer isOpen={isCartOpen} onClose={()=>setIsCartOpen(false)} items={cart} onRemove={removeFromCart} onUpdateQuantity={updateCartQuantity} onCheckout={(d)=>{setTempCustomerDetails(d); setIsCartOpen(false); setIsCartPaymentOpen(true);}} t={t.cart} />
+       {isCartPaymentOpen && <PaymentModal t={t.payment} onClose={()=>setIsCartPaymentOpen(false)} onSuccess={handleCartPaymentSuccess} config={siteConfig.paymentConfig} amount={`€${calculateCartTotal().toFixed(2)}`} />}
+       
+       <div className="bg-brand-dark text-white text-xs py-1 px-6 flex justify-between z-50">
+           <div className="flex gap-4"><span className="flex items-center gap-1"><Phone size={10}/> {siteConfig.contactPhone}</span><span className="hidden md:flex items-center gap-1"><Mail size={10}/> {siteConfig.contactEmail}</span></div>
+           <div className="flex gap-4 font-bold"><button onClick={()=>setLang('tr')} className={lang==='tr'?'text-brand-gold':''}>TR</button><button onClick={()=>setLang('en')} className={lang==='en'?'text-brand-gold':''}>EN</button><button onClick={()=>setLang('de')} className={lang==='de'?'text-brand-gold':''}>DE</button></div>
+       </div>
+
+       <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-brand-gold/10">
+           <div className="max-w-7xl mx-auto px-6 h-14 flex justify-between items-center">
+               <div className="flex items-center gap-3 cursor-pointer" onClick={()=>setView('home')}>
+                   <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center border border-brand-gold group-hover:shadow-[0_0_15px_#D4AF37] transition duration-500">
+                     <div className="text-[6px] text-brand-gold font-bold text-center leading-none">SHENAY<br/>AI</div>
+                   </div>
+                   <span className="text-lg font-serif font-extrabold tracking-widest text-brand-gold drop-shadow-sm">{siteConfig.siteTitle || 'SHENAY ILERI'}</span>
                </div>
-               <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">{t.cart.orderSuccessTitle}</h2>
-               <p className="text-gray-500 text-sm mb-6 leading-relaxed">{t.cart.orderSuccessMsg}</p>
-               <button onClick={() => setShowSuccessModal(false)} className="w-full bg-brand-dark text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition shadow-lg">{t.cart.continueShop}</button>
+               <div className="hidden lg:flex gap-2 items-center">
+                   <NavButton targetView="home" label={t.nav.home} />
+                   <NavButton targetView="about" label={t.nav.about} />
+                   <NavButton targetView="services" label={t.nav.services} />
+                   <NavButton targetView="products" label={t.nav.products} />
+                   <NavButton targetView="blog" label={t.nav.blog} />
+                   <NavButton targetView="gallery" label={t.nav.gallery} />
+                   <NavButton targetView="contact" label={t.nav.contact} />
+                   
+                   <button onClick={()=>setIsCartOpen(true)} className="relative p-1 ml-2 text-brand-dark hover:text-brand-gold transition"><ShoppingBag size={20}/>{cart.length>0&&<span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white text-[8px] rounded-full flex items-center justify-center">{cart.length}</span>}</button>
+               </div>
+               <button className="lg:hidden" onClick={()=>setMobileMenuOpen(!mobileMenuOpen)}><Menu size={20}/></button>
            </div>
-        </div>
-      )}
+           {mobileMenuOpen && <div className="lg:hidden bg-white border-t p-4 flex flex-col space-y-4 shadow-xl"><NavButton targetView="home" label={t.nav.home}/><NavButton targetView="about" label={t.nav.about} /><NavButton targetView="services" label={t.nav.services}/><NavButton targetView="products" label={t.nav.products}/><NavButton targetView="gallery" label={t.nav.gallery} /><NavButton targetView="contact" label={t.nav.contact} /></div>}
+       </nav>
 
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cart} onRemove={removeFromCart} onUpdateQuantity={updateCartQuantity} onCheckout={handleCartCheckout} t={t.cart} />
-      
-      {isCartPaymentOpen && (
-          <PaymentModal 
-             t={t.payment}
-             onClose={() => setIsCartPaymentOpen(false)}
-             onSuccess={handleCartPaymentSuccess}
-             config={siteConfig.paymentConfig}
-             amount={`€${calculateCartTotal().toFixed(2)}`}
-             customTitle="Ödemeyi Tamamla"
-             customDescription="Banka havalesi ile güvenli ödeme."
-          />
-      )}
+       <main className="flex-grow">{renderView()}</main>
 
-      <div className="bg-brand-dark text-brand-light text-xs py-2 px-4 flex justify-between items-center z-50 relative">
-        <div className="flex items-center gap-4">
-           <a href={`tel:${siteConfig.contactPhone}`} className="hover:text-brand-gold flex items-center gap-1"><Phone size={12} /> {siteConfig.contactPhone}</a>
-           <span className="hidden md:inline hover:text-brand-gold cursor-pointer flex items-center gap-1"><Mail size={12} /> {siteConfig.contactEmail}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => setLang('tr')} className={`hover:text-brand-gold ${lang === 'tr' ? 'text-brand-gold font-bold' : ''}`}>TR</button>
-          <button onClick={() => setLang('en')} className={`hover:text-brand-gold ${lang === 'en' ? 'text-brand-gold font-bold' : ''}`}>EN</button>
-          <button onClick={() => setLang('de')} className={`hover:text-brand-gold ${lang === 'de' ? 'text-brand-gold font-bold' : ''}`}>DE</button>
-        </div>
-      </div>
-
-      <nav className="bg-white/95 backdrop-blur-md sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
-              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center border-2 border-brand-gold group-hover:shadow-[0_0_15px_#D4AF37] transition duration-500">
-                <div className="text-[8px] text-brand-gold font-bold text-center leading-none">SHENAY<br/>AI</div>
-              </div>
-              <span className="text-2xl font-serif font-bold tracking-wider text-brand-gold">{siteConfig.siteTitle}</span>
-            </div>
-            <div className="hidden lg:flex items-center gap-8">
-              <NavButton targetView="home" label={t.nav.home} />
-              <NavButton targetView="portfolio" label={t.nav.portfolio} /> 
-              <NavButton targetView="services" label={t.nav.services} />
-              <NavButton targetView="products" label={t.nav.products} />
-              <NavButton targetView="blog" label={t.nav.blog} />
-              <NavButton targetView="booking" label={t.nav.booking} />
-              <NavButton targetView="about" label={t.nav.about} />
-              <button onClick={() => setView('app')} className="bg-black text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition-all duration-300">{t.nav.app}</button>
-              <button onClick={() => setIsCartOpen(true)} className="relative p-2 text-gray-500 hover:text-brand-gold transition"><ShoppingBag size={22} />{cart.length > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full">{cart.length}</span>}</button>
-            </div>
-            <div className="flex items-center gap-4 lg:hidden">
-               <button onClick={() => setIsCartOpen(true)} className="relative text-gray-800"><ShoppingBag size={24} />{cart.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full">{cart.length}</span>}</button>
-               <button className="text-brand-dark" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}><Menu size={28} /></button>
-            </div>
-          </div>
-        </div>
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl">
-            <div className="flex flex-col p-6 space-y-4">
-              <NavButton targetView="home" label={t.nav.home} />
-              <NavButton targetView="portfolio" label={t.nav.portfolio} />
-              <NavButton targetView="services" label={t.nav.services} />
-              <NavButton targetView="products" label={t.nav.products} />
-              <NavButton targetView="blog" label={t.nav.blog} />
-              <NavButton targetView="booking" label={t.nav.booking} />
-              <NavButton targetView="about" label={t.nav.about} />
-              <NavButton targetView="app" label={t.nav.app} />
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <main className="flex-grow">{renderView()}</main>
-
-      <footer className="bg-[#111] text-white pt-16 pb-8 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div>
-              <h3 className="font-serif text-2xl mb-6 text-brand-gold uppercase">{siteConfig.siteTitle}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6 whitespace-pre-line">{siteConfig.footerBio}</p>
-              <div className="flex gap-4">
-                <a href={INSTAGRAM_LINK} className="text-gray-400 hover:text-white transition"><Instagram size={20} /></a>
-                <a href="#" className="text-gray-400 hover:text-white transition"><Mail size={20} /></a>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-gray-300">{t.nav.services}</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                {siteConfig.services.slice(0, 4).map(service => (<li key={service.id} className="hover:text-brand-gold cursor-pointer transition" onClick={() => handleServiceClick(service.id)}>{service.title}</li>))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-gray-300">{t.contact.title}</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="flex items-center gap-2"><MapPin size={16} /> {siteConfig.contactAddress}</li>
-                <li className="flex items-center gap-2"><Phone size={16} /> {siteConfig.contactPhone}</li>
-                <li className="flex items-center gap-2"><Mail size={16} /> {siteConfig.contactEmail}</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-gray-300">{siteConfig.newsletterTitle}</h4>
-              <p className="text-gray-500 text-xs mb-4">{siteConfig.newsletterText}</p>
-              <div className="flex">
-                <input type="email" placeholder="Email Address" className="bg-gray-800 text-white px-4 py-2 rounded-l-md outline-none text-sm w-full focus:ring-1 focus:ring-brand-gold" />
-                <button className="bg-brand-gold text-black px-4 py-2 rounded-r-md font-bold text-xs hover:bg-white transition">OK</button>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
-            <p>&copy; 2025 {siteConfig.siteTitle}. All rights reserved.</p>
-            <div className="flex gap-6 mt-4 md:mt-0">
-               <button onClick={() => setView('returns')} className="hover:text-brand-gold transition">{t.returns.title}</button>
-               <button onClick={() => setView('admin')} className="hover:text-brand-gold flex items-center gap-1 transition"><Lock size={10} /> {t.nav.admin}</button>
-            </div>
-          </div>
-        </div>
-      </footer>
+       <footer className="bg-[#111] text-white py-12 border-t border-gray-800">
+           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8 text-sm">
+               <div><h3 className="text-xl font-serif text-brand-gold mb-4">{siteConfig.siteTitle}</h3><p className="text-gray-400 whitespace-pre-line">{siteConfig.footerBio}</p></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">Menu</h4><ul className="space-y-2 text-gray-500"><li><button onClick={()=>setView('services')}>Hizmetler</button></li><li><button onClick={()=>setView('products')}>Ürünler</button></li><li><button onClick={()=>setView('gallery')}>Galeri</button></li></ul></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">İletişim</h4><ul className="space-y-2 text-gray-500"><li>{siteConfig.contactAddress}</li><li>{siteConfig.contactPhone}</li><li>{siteConfig.contactEmail}</li></ul></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">Yönetim</h4><button onClick={()=>setView('admin')} className="flex items-center gap-2 text-gray-500 hover:text-white"><Lock size={14}/> Admin Girişi</button></div>
+           </div>
+       </footer>
     </div>
   );
 };

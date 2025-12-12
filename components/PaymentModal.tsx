@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { X, CheckCircle, Building2, Copy, ShieldCheck } from 'lucide-react';
 import { TranslationStructure, PaymentConfig } from '../types';
@@ -47,7 +48,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
            <div className="absolute top-0 left-0 w-full h-full bg-makeup-pattern opacity-10"></div>
            <div className="relative z-10">
              <h3 className="font-serif text-3xl mb-2 gold-text-shadow">{customTitle || t.title}</h3>
-             <p className="text-gray-300 text-sm max-w-xs mx-auto">{customDescription || t.description}</p>
              <div className="mt-4 text-2xl font-bold text-brand-gold">{amount}</div>
            </div>
         </div>
