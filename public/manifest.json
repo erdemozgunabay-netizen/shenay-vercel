@@ -3,18 +3,18 @@
   "short_name": "ShenayAI",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#FAFAFA",
+  "background_color": "#ffffff",
   "theme_color": "#e91e63",
   "description": "AI Makyaj Danışmanı ve güzellik platformu",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3163/3163212.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3163/3163212.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
