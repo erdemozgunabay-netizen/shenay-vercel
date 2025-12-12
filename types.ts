@@ -288,6 +288,13 @@ export interface InvoiceConfig {
   jurisdiction: string; 
 }
 
+export interface FirestoreSettings {
+  siteTitle?: string;
+  siteSubtitle?: string;
+  siteContent?: string;
+  siteImage?: string;
+}
+
 export interface SiteConfig {
   siteTitle: string; 
   heroTitle: string;

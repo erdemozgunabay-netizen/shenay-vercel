@@ -1,13 +1,13 @@
-import { SiteConfig } from '../types';
+import { SiteConfig, FirestoreSettings, Order } from '../types';
 import { ref, set, get, child, onValue } from 'firebase/database';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, addDoc, query, orderBy } from 'firebase/firestore';
 import { db, rtdb, auth } from '../firebase'; // Centralized instances
 
 const LOCAL_STORAGE_KEY = 'shenay_site_config_v9';
 
-// --- FIRESTORE FUNCTIONS (settings/siteTitle) ---
+// --- FIRESTORE FUNCTIONS (settings/global) ---
 
-export const saveSiteTitleToFirestore = async (newTitle: string) => {
+export const saveSettingsToFirestore = async (settings: FirestoreSettings) => {
   if (!db || !auth) return false;
   
   // Enforce auth for writing
@@ -16,10 +16,9 @@ export const saveSiteTitleToFirestore = async (newTitle: string) => {
   }
 
   try {
-    const docRef = doc(db, "settings", "siteTitle"); 
-    // Save to 'value' field as requested
-    await setDoc(docRef, { value: newTitle }, { merge: true });
-    console.log("Firestore: Site başlığı güncellendi.");
+    const docRef = doc(db, "settings", "global"); 
+    await setDoc(docRef, settings, { merge: true });
+    console.log("Firestore: Site ayarları güncellendi.");
     return true;
   } catch (error: any) {
     console.error("Firestore Yazma Hatası:", error);
@@ -27,49 +26,92 @@ export const saveSiteTitleToFirestore = async (newTitle: string) => {
   }
 };
 
-export const getSiteTitleFromFirestore = async (): Promise<string | null> => {
-  if (!db) return null;
-
-  try {
-    const docRef = doc(db, "settings", "siteTitle");
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data().value;
-    } else {
-      return null;
-    }
-  } catch (error: any) {
-    if (error.code === 'permission-denied' || error.message?.includes('Missing or insufficient permissions')) {
-        console.warn("Firestore: Erişim kısıtlı (Permission Denied). Varsayılan başlık kullanılıyor.");
-        return null;
-    }
-    console.warn("Firestore Okuma Uyarısı:", error.message);
-    return null;
-  }
+// Deprecated: use subscribeToSettings instead
+export const saveSiteTitleToFirestore = async (newTitle: string) => {
+    return saveSettingsToFirestore({ siteTitle: newTitle });
 };
 
-// Real-time Listener for Site Title
-export const subscribeToSiteTitle = (callback: (title: string | null) => void) => {
+// Real-time Listener for Site Settings (Title, Subtitle, Image, Content)
+export const subscribeToSettings = (
+  onUpdate: (settings: FirestoreSettings | null) => void,
+  onError?: (error: any) => void
+) => {
   if (!db) return () => {};
 
-  const docRef = doc(db, "settings", "siteTitle");
+  const docRef = doc(db, "settings", "global");
   
-  const unsubscribe = onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      callback(data.value);
-    } else {
-      callback(null);
+  const unsubscribe = onSnapshot(docRef, 
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as FirestoreSettings;
+        onUpdate(data);
+      } else {
+        onUpdate(null);
+      }
+    }, 
+    (error) => {
+      console.error("Firestore Settings Listener Error:", error);
+      if (onError) onError(error);
     }
-  }, (error) => {
-    // Permission denied hatalarını sessizce yakala (Giriş yapmamış kullanıcılar için)
-    if (error.code !== 'permission-denied') {
-      console.warn("Firestore Listener Error:", error);
-    }
-  });
+  );
 
   return unsubscribe;
+};
+
+// Deprecated wrapper for backward compatibility
+export const subscribeToSiteTitle = (
+    onUpdate: (title: string | null) => void,
+    onError?: (error: any) => void
+) => {
+    return subscribeToSettings((settings) => {
+        onUpdate(settings?.siteTitle || null);
+    }, onError);
+};
+
+
+// --- FIRESTORE FUNCTIONS (orders) ---
+
+export const saveOrderToFirestore = async (order: Order) => {
+    if (!db) return false;
+    try {
+        // Create a new doc in 'orders' collection
+        // We use order.id as document ID or let Firestore generate one. 
+        // Using order.id (number) converted to string ensures idempotency.
+        const docRef = doc(db, "orders", order.id.toString());
+        await setDoc(docRef, order);
+        console.log("Firestore: Sipariş kaydedildi.");
+        return true;
+    } catch (error) {
+        console.error("Firestore Sipariş Kayıt Hatası:", error);
+        return false;
+    }
+};
+
+export const subscribeToOrders = (
+    onUpdate: (orders: Order[]) => void,
+    onError?: (error: any) => void
+) => {
+    if (!db) return () => {};
+
+    const ordersRef = collection(db, "orders");
+    // Optionally sort by date
+    const q = query(ordersRef, orderBy("date", "desc"));
+
+    const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+            const orders: Order[] = [];
+            snapshot.forEach((doc) => {
+                orders.push(doc.data() as Order);
+            });
+            onUpdate(orders);
+        },
+        (error) => {
+            console.error("Firestore Orders Listener Error:", error);
+            if (onError) onError(error);
+        }
+    );
+
+    return unsubscribe;
 };
 
 
@@ -112,8 +154,11 @@ export const storageService = {
   saveData,
   getData,
   saveSiteTitleToFirestore,
-  getSiteTitleFromFirestore,
+  saveSettingsToFirestore,
+  subscribeToSettings,
   subscribeToSiteTitle,
+  saveOrderToFirestore,
+  subscribeToOrders,
   
   save: async (config: SiteConfig) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(config));

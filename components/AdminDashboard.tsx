@@ -4,11 +4,11 @@ import {
   Users, ShoppingBag, Package, Settings, RefreshCw, 
   Trash2, LogOut, CheckCircle, X, Plus, Printer, 
   Phone, Mail, MapPin, Menu, Calendar, User, Clock,
-  ArrowRight, ExternalLink, CloudUpload, Loader2, Upload
+  ArrowRight, ExternalLink, CloudUpload, Loader2, Upload, Wifi, WifiOff, Lock
 } from 'lucide-react';
-import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment } from '../types';
+import { TranslationStructure, SiteConfig, Service, Product, BlogPost, Order, Appointment, FirestoreSettings } from '../types';
 import { AdminLogin } from './AdminLogin';
-import { storageService, saveSiteTitleToFirestore } from '../services/storageService';
+import { storageService, saveSettingsToFirestore, subscribeToSettings, subscribeToOrders } from '../services/storageService';
 import { auth } from '../firebase'; // Import auth to check user status directly
 
 interface AdminDashboardProps {
@@ -41,15 +41,21 @@ const ORDER_STATUS_COLORS: Record<Order['status'], string> = {
   refunded: 'bg-gray-100 text-gray-700'
 };
 
+type ConnectionStatus = 'connecting' | 'connected' | 'error' | 'permission-denied';
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, setSiteConfig, isAuthenticated, onLogin, onLogout }) => {
   const [activeTab, setActiveTab] = useState('Genel Bakış'); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // Saving State
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false); // New state for success message
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
-  // Manual Edit States
+  // Real-time Connection State
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [connectionMessage, setConnectionMessage] = useState<string>('Sunucuya bağlanılıyor...');
+
+  // Manual Edit States (Initialized from Props)
   const [manualTitle, setManualTitle] = useState(siteConfig.heroTitle);
   const [manualSubtitle, setManualSubtitle] = useState(siteConfig.heroSubtitle);
   const [manualImage, setManualImage] = useState(siteConfig.heroImage);
@@ -83,6 +89,88 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
   // Drag and Drop State for Products
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
+  // Real-time Listener Hook for Admin Panel with Auto-Reconnect (Settings & Orders)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let unsubscribeSettings: (() => void) | undefined;
+    let unsubscribeOrders: (() => void) | undefined;
+    let retryTimer: ReturnType<typeof setTimeout>;
+
+    const connectToFirestore = () => {
+        setConnectionStatus('connecting');
+        setConnectionMessage('Sunucuyla bağlantı kuruluyor...');
+
+        // Clear existing
+        if (unsubscribeSettings) { unsubscribeSettings(); unsubscribeSettings = undefined; }
+        if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = undefined; }
+
+        try {
+            // 1. Subscribe to Settings (Global)
+            unsubscribeSettings = subscribeToSettings(
+                (settings) => {
+                    setConnectionStatus('connected');
+                    setConnectionMessage('Canlı bağlantı aktif');
+                    if (settings) {
+                        setSiteConfig(prev => ({ 
+                            ...prev, 
+                            siteTitle: settings.siteTitle || prev.siteTitle,
+                            heroSubtitle: settings.siteSubtitle || prev.heroSubtitle,
+                            aboutText: settings.siteContent || prev.aboutText,
+                            heroImage: settings.siteImage || prev.heroImage
+                        }));
+                        // Sync local inputs
+                        if (settings.siteTitle) setManualSiteTitle(settings.siteTitle);
+                        if (settings.siteSubtitle) setManualSubtitle(settings.siteSubtitle);
+                        if (settings.siteContent) setManualAboutText(settings.siteContent);
+                        if (settings.siteImage) setManualImage(settings.siteImage);
+                    }
+                },
+                (error) => handleConnectionError(error)
+            );
+
+            // 2. Subscribe to Orders Collection
+            unsubscribeOrders = subscribeToOrders(
+                (orders) => {
+                    setSiteConfig(prev => ({ ...prev, orders: orders }));
+                },
+                (error) => handleConnectionError(error)
+            );
+
+        } catch (e) {
+            console.error("Subscription setup error:", e);
+            setConnectionStatus('error');
+            setConnectionMessage('Kurulum hatası, tekrar deneniyor...');
+            retryTimer = setTimeout(connectToFirestore, 5000);
+        }
+    };
+
+    const handleConnectionError = (error: any) => {
+        console.error("Dashboard Listener Error:", error);
+        if (error.code === 'permission-denied') {
+            setConnectionStatus('permission-denied');
+            setConnectionMessage('Yetki Hatası: Değişiklikleri görmek için tekrar giriş yapın.');
+        } else {
+            setConnectionStatus('error');
+            setConnectionMessage('Bağlantı hatası, tekrar deneniyor...');
+            clearTimeout(retryTimer);
+            retryTimer = setTimeout(() => {
+                console.log("Attempting to reconnect...");
+                connectToFirestore();
+            }, 5000);
+        }
+    };
+
+    // Initial connection
+    connectToFirestore();
+
+    return () => {
+        if (unsubscribeSettings) unsubscribeSettings();
+        if (unsubscribeOrders) unsubscribeOrders();
+        clearTimeout(retryTimer);
+    };
+  }, [isAuthenticated, setSiteConfig]);
+
   // Responsive Check
   useEffect(() => {
     const handleResize = () => {
@@ -94,21 +182,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Sync local state when config changes
+  // Sync local state when config changes (Legacy Sync for non-firestore fields)
   useEffect(() => {
     setManualTitle(siteConfig.heroTitle);
-    setManualSubtitle(siteConfig.heroSubtitle);
-    setManualImage(siteConfig.heroImage);
+    // Note: subtitle, content, image are now synced via the listener above
     setManualVideo(siteConfig.heroVideo || '');
     setManualAboutImage(siteConfig.aboutImage);
-    setManualAboutText(siteConfig.aboutText);
-    
-    // Only sync title if we are not currently saving (to avoid jumpiness)
-    // The real-time listener handles the incoming updates
-    if (siteConfig.siteTitle && !isSaving) {
-       setManualSiteTitle(siteConfig.siteTitle);
-    }
-    
     setManualFooterBio(siteConfig.footerBio);
     setManualEmail(siteConfig.contactEmail);
     setManualPhone(siteConfig.contactPhone);
@@ -171,17 +250,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
           setIsSaving(true);
           setSaveSuccess(false); // Reset before save
           try {
-              // 1. Tüm config'i 'siteConfig' altına kaydet (Realtime DB)
+              // 1. Save Full Config to Realtime DB (Legacy support)
               await storageService.saveData('siteConfig', siteConfig);
               
-              // 2. Site Başlığını FIRESTORE'a kaydet (Requirement)
-              const titleToSave = manualSiteTitle;
+              // 2. Save Specific Settings to Firestore (Requirement)
+              const settingsToSave: FirestoreSettings = {
+                  siteTitle: manualSiteTitle,
+                  siteSubtitle: manualSubtitle,
+                  siteContent: manualAboutText,
+                  siteImage: manualImage
+              };
               
               try {
-                  await saveSiteTitleToFirestore(titleToSave);
+                  await saveSettingsToFirestore(settingsToSave);
                   // Başarılı olduğunda state güncelle
                   setSaveSuccess(true);
-                  setTimeout(() => setSaveSuccess(false), 3000); // 3 saniye sonra mesajı kaldır
+                  setTimeout(() => setSaveSuccess(false), 3000); 
               } catch (firestoreError: any) {
                   if (firestoreError.message.includes("Önce giriş yapın")) {
                       alert("Önce giriş yapın");
@@ -213,14 +297,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       if (urlOrFile instanceof File) {
           try {
              const base64 = await resizeImage(urlOrFile, 1200, 0.8);
-             if (type === 'image') setSiteConfig(prev => ({ ...prev, heroImage: base64 }));
+             if (type === 'image') {
+                 setSiteConfig(prev => ({ ...prev, heroImage: base64 }));
+                 setManualImage(base64);
+             }
              if (type === 'about') setSiteConfig(prev => ({ ...prev, aboutImage: base64 }));
              alert("Görsel işlendi! Yayınlamak için 'Yayınla' butonuna basmayı unutmayın.");
           } catch (e) {
               alert("Görsel işlenirken hata oluştu.");
           }
       } else {
-          if (type === 'image') setSiteConfig(prev => ({ ...prev, heroImage: urlOrFile }));
+          if (type === 'image') {
+              setSiteConfig(prev => ({ ...prev, heroImage: urlOrFile }));
+              setManualImage(urlOrFile);
+          }
           if (type === 'video') setSiteConfig(prev => ({ ...prev, heroVideo: urlOrFile }));
           if (type === 'about') setSiteConfig(prev => ({ ...prev, aboutImage: urlOrFile }));
           alert("Medya güncellendi!");
@@ -628,6 +718,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          </nav>
       </aside>
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto h-screen">
+         
+         {/* Connection Status Banner */}
+         {connectionStatus !== 'connected' && (
+            <div className={`mb-4 p-3 rounded-lg flex items-center justify-between text-sm font-bold shadow-sm ${
+                connectionStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
+                connectionStatus === 'error' ? 'bg-red-100 text-red-800' : 
+                'bg-gray-100 text-gray-800'
+            }`}>
+               <div className="flex items-center gap-2">
+                  {connectionStatus === 'connecting' ? <Loader2 size={16} className="animate-spin" /> : 
+                   connectionStatus === 'error' ? <WifiOff size={16} /> : <Lock size={16} />}
+                  <span>{connectionMessage}</span>
+               </div>
+               {connectionStatus === 'error' && <span className="text-[10px] uppercase opacity-70">Otomatik Yeniden Bağlanıyor...</span>}
+            </div>
+         )}
+
          <div className="lg:hidden mb-6 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
              <h2 className="font-serif font-bold text-lg">{activeTab}</h2>
              <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-gray-100 rounded-lg"><Menu /></button>
@@ -637,7 +744,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               <div className="bg-gradient-to-br from-brand-gold to-yellow-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
                  <div className="relative z-10">
                    <h3 className="font-serif text-3xl mb-2">Hoşgeldin, Shenay</h3>
-                   <p className="opacity-90 text-sm mb-8 max-w-lg">Sitenin genel durumu harika görünüyor. Yeni siparişler ve randevular seni bekliyor.</p>
+                   <div className="flex items-center gap-2 mb-8">
+                      <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+                      <p className="opacity-90 text-sm">
+                        {connectionStatus === 'connected' ? 'Sistem Canlı ve Senkronize' : 'Bağlantı Bekleniyor'}
+                      </p>
+                   </div>
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <button onClick={() => setActiveTab('Siparişler')} className="bg-white/20 backdrop-blur-md p-4 rounded-xl text-center hover:bg-white/30 transition transform hover:-translate-y-1">
                          <div className="text-3xl font-bold">{siteConfig.orders?.length || 0}</div>
@@ -842,6 +954,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          )}
          
          {activeTab === 'Hizmetler' && (
+           // ... (Existing Service Management)
            <div className="animate-fade-in">
               <div className="flex justify-between items-center mb-6">
                  <h3 className="font-bold text-xl text-gray-800">Hizmet Yönetimi</h3>
@@ -895,6 +1008,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          )}
          
          {activeTab === 'Ürünler' && (
+           // ... (Existing Product Management)
            <div className="animate-fade-in">
               <div className="flex justify-between items-center mb-6">
                  <h3 className="font-bold text-xl text-gray-800">Ürün Yönetimi</h3>
@@ -954,6 +1068,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
          )}
          
          {activeTab === 'Blog' && (
+           // ... (Existing Blog Management)
            <div className="animate-fade-in">
              <div className="flex justify-between items-center mb-6">
                  <h3 className="font-bold text-xl text-gray-800">Blog Yazıları</h3>
@@ -1016,12 +1131,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
              <div className="grid lg:grid-cols-2 gap-8 animate-fade-in">
                <div className="space-y-6">
                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                       <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Type size={18} /> Metin İçerikleri (Manuel)</h3>
+                       <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Type size={18} /> Metin & Görsel İçerikleri</h3>
                        <div className="space-y-4">
-                           <input value={manualTitle} onChange={(e) => setManualTitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" />
-                           <textarea value={manualSubtitle} onChange={(e) => setManualSubtitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-24 resize-none" />
-                           <textarea value={manualAboutText} onChange={(e) => setManualAboutText(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-32 resize-none" />
-                           <button onClick={() => { handleManualUpdate(); handleAboutTextUpdate(); }} className="w-full bg-brand-dark text-white py-3 rounded-lg font-bold hover:bg-brand-gold hover:text-black transition">Metinleri Güncelle</button>
+                           {/* Site Title */}
+                           <div>
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site Başlığı <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
+                               <input value={manualSiteTitle} onChange={(e) => setManualSiteTitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" />
+                           </div>
+                           
+                           {/* Site Subtitle */}
+                           <div>
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">Alt Başlık (Subtitle) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
+                               <textarea value={manualSubtitle} onChange={(e) => setManualSubtitle(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-20 resize-none" />
+                           </div>
+
+                           {/* Site Content / About */}
+                           <div>
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site İçeriği / Hakkında <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
+                               <textarea value={manualAboutText} onChange={(e) => setManualAboutText(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1 h-32 resize-none" />
+                           </div>
+
+                           {/* Site Image URL */}
+                           <div>
+                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site Görseli (URL) <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
+                               <input value={manualImage} onChange={(e) => setManualImage(e.target.value)} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 mt-1" placeholder="https://..." />
+                           </div>
+
+                           <button onClick={() => { handleManualUpdate(); handleAboutTextUpdate(); }} className="w-full bg-brand-dark text-white py-3 rounded-lg font-bold hover:bg-brand-gold hover:text-black transition text-sm">Önizle (Kaydetmez)</button>
                        </div>
                    </div>
                    
@@ -1029,10 +1165,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Settings size={18} /> İletişim & Alt Bilgi</h3>
                        <div className="space-y-3">
-                           <div>
-                               <label className="text-xs font-bold text-gray-400 flex justify-between">Site Başlığı <span className="text-[9px] text-brand-gold bg-black/5 px-1 rounded">Firestore</span></label>
-                               <input value={manualSiteTitle} onChange={(e) => setManualSiteTitle(e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" />
-                           </div>
                            <div><label className="text-xs font-bold text-gray-400">Telefon</label><input value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
                            <div><label className="text-xs font-bold text-gray-400">Email</label><input value={manualEmail} onChange={(e) => setManualEmail(e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
                            <div><label className="text-xs font-bold text-gray-400">Adres</label><input value={manualAddress} onChange={(e) => setManualAddress(e.target.value)} className="w-full p-2 bg-gray-50 rounded border border-gray-200" /></div>
@@ -1050,8 +1182,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                            <div className="flex items-center gap-4">
                                {manualImage && <img src={manualImage} className="w-16 h-16 object-cover rounded-lg border" />}
                                <div className="flex-1">
-                                   <label className="block w-full text-center bg-gray-100 py-2 rounded cursor-pointer hover:bg-gray-200 text-xs font-bold mb-2">Görsel Seç<input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && handleMediaUpdate('image', e.target.files[0])} /></label>
-                                   <div className="flex gap-2"><input placeholder="veya URL" value={manualImage} onChange={(e) => setManualImage(e.target.value)} className="w-full text-xs bg-gray-50 p-2 rounded border border-gray-200" /><button onClick={() => handleMediaUpdate('image', manualImage)} className="text-xs bg-gray-200 px-3 py-1 rounded">Kaydet</button></div>
+                                   <label className="block w-full text-center bg-gray-100 py-2 rounded cursor-pointer hover:bg-gray-200 text-xs font-bold mb-2">Dosya Yükle<input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && handleMediaUpdate('image', e.target.files[0])} /></label>
+                                   {/* URL input handled in the text block above for firestore sync */}
                                </div>
                            </div>
                        </div>

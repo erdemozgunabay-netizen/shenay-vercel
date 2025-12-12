@@ -6,7 +6,7 @@ import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSec
 import { MakeupAnalyzer } from './components/MakeupAnalyzer';
 import { CartDrawer } from './components/CartDrawer';
 import { PaymentModal } from './components/PaymentModal';
-import { storageService, subscribeToSiteTitle } from './services/storageService';
+import { storageService, subscribeToSettings, saveOrderToFirestore } from './services/storageService';
 import { authService } from './services/authService';
 import { Menu, Globe, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Video } from 'lucide-react';
 
@@ -79,26 +79,43 @@ const App = () => {
 
   // --- REAL-TIME LISTENERS ---
 
-  // 1. Listen for Site Title (Firestore)
+  // 1. Listen for Site Settings (Firestore - Title, Subtitle, Image, Content)
   useEffect(() => {
-    const unsubscribe = subscribeToSiteTitle((title) => {
-        if (title) {
-            setSiteConfig(prev => ({ ...prev, siteTitle: title }));
+    const unsubscribe = subscribeToSettings(
+        (settings) => {
+            if (settings) {
+                setSiteConfig(prev => ({ 
+                    ...prev, 
+                    siteTitle: settings.siteTitle || prev.siteTitle,
+                    heroSubtitle: settings.siteSubtitle || prev.heroSubtitle,
+                    aboutText: settings.siteContent || prev.aboutText,
+                    heroImage: settings.siteImage || prev.heroImage
+                }));
+            }
+            setIsTitleLoaded(true);
+        },
+        // App.tsx usually doesn't show connection errors for public users, but we can log them
+        (error) => {
+            if (error.code !== 'permission-denied') {
+                console.warn("App Settings Listener Error:", error);
+            }
         }
-        setIsTitleLoaded(true);
-    });
+    );
     return () => unsubscribe();
   }, []);
 
-  // 2. Listen for Site Config - Images, Products, Texts (Realtime DB)
+  // 2. Listen for Site Config - Legacy Data (Realtime DB)
   useEffect(() => {
     const unsubscribe = storageService.subscribe((data) => {
       if (data) {
         setSiteConfig(prev => ({
           ...INITIAL_CONFIG, 
           ...data,
-          // Firestore'dan gelen başlık (prev.siteTitle) her zaman önceliklidir.
-          siteTitle: prev.siteTitle || data.siteTitle || ""
+          // Firestore overrides take precedence
+          siteTitle: prev.siteTitle || data.siteTitle || "",
+          heroSubtitle: prev.heroSubtitle || data.heroSubtitle || "",
+          aboutText: prev.aboutText || data.aboutText || "",
+          heroImage: prev.heroImage || data.heroImage || ""
         }));
       }
       setIsConfigLoaded(true);
@@ -178,6 +195,10 @@ const App = () => {
           status: 'pending',
           date: new Date().toISOString().split('T')[0]
       };
+      
+      // Save order to Firestore Collection (New Requirement)
+      await saveOrderToFirestore(newOrder);
+
       const updatedOrders = [newOrder, ...(siteConfig.orders || [])];
       const updatedProducts = siteConfig.products.map(p => {
              const inCart = cart.find(c => c.id === p.id);
@@ -185,7 +206,7 @@ const App = () => {
       });
       const newConfig = { ...siteConfig, orders: updatedOrders, products: updatedProducts };
       setSiteConfig(newConfig); 
-      // Siparişler her zaman kaydedilir
+      // Also save to legacy storage for safety
       storageService.save(newConfig);
       setShowSuccessModal(true); setCart([]); setIsCartPaymentOpen(false); setTempCustomerDetails(null);
   };
@@ -208,7 +229,12 @@ const App = () => {
   const handleReturnRequest = (request: ReturnRequest) => {
       const order = siteConfig.orders.find(o => o.id === request.orderId);
       if (order && order.customer.email === request.email) {
-          const newConfigUpdater = (prev: SiteConfig) => ({ ...prev, orders: prev.orders.map(o => o.id === request.orderId ? { ...o, status: 'return_requested' as const } : o) });
+          // Update order status
+          const updatedOrder = { ...order, status: 'return_requested' as const };
+          // Update in Firestore
+          saveOrderToFirestore(updatedOrder);
+
+          const newConfigUpdater = (prev: SiteConfig) => ({ ...prev, orders: prev.orders.map(o => o.id === request.orderId ? updatedOrder : o) });
           const newConfig = newConfigUpdater(siteConfig);
           setSiteConfig(newConfig); 
           storageService.save(newConfig);
