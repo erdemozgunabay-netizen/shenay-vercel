@@ -8,7 +8,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { PaymentModal } from './components/PaymentModal';
 import { storageService, subscribeToSettings, saveOrderToFirestore } from './services/storageService';
 import { authService } from './services/authService';
-import { Menu, Globe, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Video } from 'lucide-react';
+import { Menu, Globe, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, CheckCircle, Video, RefreshCw } from 'lucide-react';
 
 // Initial mocks used if storage is empty
 const INITIAL_CONFIG: SiteConfig = {
@@ -69,6 +69,9 @@ const App = () => {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [isTitleLoaded, setIsTitleLoaded] = useState(false);
   
+  // Connection Refresh State for Mobile
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
   // Authentication Listener
   useEffect(() => {
     const unsubscribe = authService.observeAuth(async (status, user) => {
@@ -77,28 +80,41 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // --- MOBILE VISIBILITY LISTENER ---
+  // When mobile user switches tabs or unlocks phone, force a refresh check
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("App active, refreshing data connections...");
+        setLastRefresh(Date.now()); // Triggers effect hooks to resubscribe
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   // --- HELPER: Get Localized String from Settings ---
   // Priorities: 1. Firestore specific lang, 2. Firestore fallback (TR), 3. Code Constant (TRANSLATIONS)
   const getLocalized = (settings: FirestoreSettings | undefined, keyPrefix: string, activeLang: LanguageCode, constantFallback?: string) => {
       if (!settings) return constantFallback || '';
       
       const specific = settings[`${keyPrefix}_${activeLang}` as keyof FirestoreSettings];
-      // Note: We don't necessarily fallback to TR from Firestore if it's empty, 
-      // we might prefer the hardcoded English string if the user is viewing English but DB is empty for EN.
-      // But for simplicity, we check if specific exists, if not, use constant.
-      
       return specific || constantFallback || '';
   };
 
   // --- REAL-TIME LISTENERS ---
 
   // 1. Listen for Site Settings (Firestore - Title, Subtitle, Image, Content)
-  // This effect runs initially AND whenever 'lang' changes to update the displayed text
+  // Re-run when language changes OR when visibility triggers a refresh
   useEffect(() => {
+    // Clear legacy local storage on mount to force fresh data fetch on mobile
+    if (!isTitleLoaded) {
+       // Optional: localStorage.removeItem('shenay_site_config_v9'); 
+    }
+
     const unsubscribe = subscribeToSettings(
         (settings) => {
             const currentT = TRANSLATIONS[lang];
-            // Use helper to decide between DB value or Default Translation value
             const title = getLocalized(settings || undefined, 'siteTitle', lang, siteConfig.siteTitle);
             const hTitle = getLocalized(settings || undefined, 'heroTitle', lang, currentT.hero.title);
             const hSubtitle = getLocalized(settings || undefined, 'siteSubtitle', lang, currentT.hero.subtitle);
@@ -122,7 +138,7 @@ const App = () => {
         }
     );
     return () => unsubscribe();
-  }, [lang]); // Re-run when language changes
+  }, [lang, lastRefresh]); 
 
   // 2. Listen for Site Config - Legacy Data (Realtime DB)
   useEffect(() => {
@@ -131,10 +147,13 @@ const App = () => {
         setSiteConfig(prev => ({
           ...INITIAL_CONFIG, 
           ...data,
-          // Firestore overrides take precedence (handled in other effect, but we keep structure here)
+          // Firestore overrides take precedence
           heroTitle: prev.heroTitle, 
           heroSubtitle: prev.heroSubtitle,
-          aboutText: prev.aboutText
+          aboutText: prev.aboutText,
+          // Ensure arrays are initialized
+          orders: data.orders || [],
+          appointments: data.appointments || []
         }));
       }
       setIsConfigLoaded(true);
@@ -143,7 +162,7 @@ const App = () => {
     return () => {
       if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
     };
-  }, []);
+  }, [lastRefresh]);
 
   // Logout Wrapper
   const handleLogout = async () => {
@@ -160,12 +179,10 @@ const App = () => {
         // Update Catalog Items (Services, Products, Blogs)
         setSiteConfig(prev => ({
             ...prev,
-            // Force update text fields from constants if no DB override exists
             heroTitle: getLocalized(prev.rawSettings, 'heroTitle', lang, currentT.hero.title),
             heroSubtitle: getLocalized(prev.rawSettings, 'siteSubtitle', lang, currentT.hero.subtitle),
             aboutText: getLocalized(prev.rawSettings, 'siteContent', lang, currentT.sections.aboutText),
             
-            // Map Services
             services: prev.services.map(service => {
                 const translation = SERVICE_CATALOG[service.id]?.[lang];
                 if (translation) {
@@ -174,7 +191,6 @@ const App = () => {
                 return service;
             }),
             
-            // Map Products
             products: prev.products.map(product => {
                 const translation = PRODUCT_CATALOG[product.id]?.[lang];
                 if (translation) {
@@ -183,7 +199,6 @@ const App = () => {
                 return product;
             }),
 
-            // Map Blog Posts (NEW)
             blogPosts: prev.blogPosts.map(post => {
                 const translation = BLOG_CATALOG[post.id]?.[lang];
                 if (translation) {

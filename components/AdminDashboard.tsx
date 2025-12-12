@@ -55,6 +55,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
   // Real-time Connection State
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
   const [connectionMessage, setConnectionMessage] = useState<string>('Sunucuya bağlanılıyor...');
+  const [refreshKey, setRefreshKey] = useState(0); // Manual refresh trigger
 
   // --- MULTI-LANGUAGE EDIT STATES ---
   // We maintain a local copy of all fields for all languages
@@ -159,7 +160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
         if (unsubscribeOrders) unsubscribeOrders();
         clearTimeout(retryTimer);
     };
-  }, [isAuthenticated, setSiteConfig]);
+  }, [isAuthenticated, setSiteConfig, refreshKey]); // Add refreshKey to force re-subscribe
 
   // Responsive Check
   useEffect(() => {
@@ -710,7 +711,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                    connectionStatus === 'error' ? <WifiOff size={16} /> : <Lock size={16} />}
                   <span>{connectionMessage}</span>
                </div>
-               {connectionStatus === 'error' && <span className="text-[10px] uppercase opacity-70">Otomatik Yeniden Bağlanıyor...</span>}
+               
+               <div className="flex items-center gap-2">
+                   {connectionStatus === 'error' && (
+                        <button onClick={() => setRefreshKey(k => k + 1)} className="bg-white p-1 rounded hover:bg-gray-200 text-[10px] uppercase font-bold flex items-center gap-1 border border-red-200">
+                            <RefreshCw size={12} /> Yenile
+                        </button>
+                   )}
+                   {connectionStatus === 'error' && <span className="text-[10px] uppercase opacity-70">Otomatik Yeniden Bağlanıyor...</span>}
+               </div>
             </div>
          )}
 
