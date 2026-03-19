@@ -217,8 +217,16 @@ const App = () => {
       case 'gallery': return <GallerySection t={t.sections} items={siteConfig.gallery} />;
       case 'contact': return <ContactSection t={t.contact} config={siteConfig} />;
       case 'returns': return <ReturnsSection t={t.returns} policyText={RETURN_POLICIES[lang]} onRequestSubmit={()=>{alert("Talep alındı")}} />;
-      case 'service-detail': return <ServiceDetail service={siteConfig.services.find(s=>s.id===selectedServiceId)!} onBack={()=>setView('services')} onBookNow={()=>setView('booking')} />;
-      case 'blog-detail': return <BlogDetail post={siteConfig.blogPosts.find(p=>p.id===selectedPostId)!} onBack={()=>setView('blog')} />;
+      case 'service-detail': {
+        const service = siteConfig.services.find(s => String(s.id) === String(selectedServiceId));
+        if (!service) { setView('services'); return null; }
+        return <ServiceDetail t={t.sections} service={service} onBack={() => setView('services')} onBookNow={() => setView('booking')} />;
+      }
+      case 'blog-detail': {
+        const post = siteConfig.blogPosts.find(p => String(p.id) === String(selectedPostId));
+        if (!post) { setView('blog'); return null; }
+        return <BlogDetail t={t.sections} post={post} onBack={() => setView('blog')} />;
+      }
       default: return (
           <>
             <div className="relative h-[85vh] bg-black">

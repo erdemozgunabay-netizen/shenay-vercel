@@ -145,13 +145,19 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({ t, service, onBack
                                 <h3 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
                                     <Image className="text-brand-gold" /> {t.galleryTitle}
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {service.gallery.map((img, idx) => (
-                                        <div key={idx} className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition aspect-square bg-gray-100">
-                                            <img src={img} alt={t.galleryAlt} className="w-full h-full object-cover hover:scale-105 transition duration-500" />
-                                        </div>
-                                    ))}
-                                </div>
+                                {service.gallery && service.gallery.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {service.gallery.map((item, idx) => (
+                                            <div key={idx} className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition aspect-square bg-gray-100">
+                                                {item.type === 'image' ? (
+                                                    <img src={item.url} alt={t.galleryAlt} className="w-full h-full object-cover hover:scale-105 transition duration-500" />
+                                                ) : (
+                                                    <video src={item.url} controls className="w-full h-full object-cover" />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

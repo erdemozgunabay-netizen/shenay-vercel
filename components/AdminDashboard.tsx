@@ -131,6 +131,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       setLocalSettings({...localSettings, heroImage: b64});
   };
 
+  const handleGalleryMediaUpload = async (file: File, type: 'image' | 'video') => {
+    if (type === 'image') {
+      const b64 = await resizeImage(file);
+      const newGallery = [...(editingItem.gallery || []), { url: b64, type: 'image' }];
+      setEditingItem({ ...editingItem, gallery: newGallery });
+    } else {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const b64 = e.target?.result as string;
+        const newGallery = [...(editingItem.gallery || []), { url: b64, type: 'video' }];
+        setEditingItem({ ...editingItem, gallery: newGallery });
+      };
+    }
+  };
+
+  const removeGalleryItem = (index: number) => {
+    const newGallery = [...(editingItem.gallery || [])];
+    newGallery.splice(index, 1);
+    setEditingItem({ ...editingItem, gallery: newGallery });
+  };
+
   const openEditModal = (type: 'service' | 'product' | 'blog' | 'gallery' | 'testimonial' | 'team' | 'banner', item?: any) => {
       setEditType(type);
       if (item) {
@@ -138,7 +160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       } else {
           // Defaults for new items
           const defaults = {
-             service: { id: Date.now(), title: '', description: '', image: 'https://via.placeholder.com/400', price: `${t.currencySymbol}100` },
+             service: { id: Date.now(), title: '', description: '', image: 'https://via.placeholder.com/400', price: `${t.currencySymbol}100`, gallery: [] },
              product: { id: Date.now(), name: '', price: `${t.currencySymbol}0.00`, description: '', image: 'https://via.placeholder.com/400', rating: 5, orderCount: 0, voteCount: 0, stock: 10 },
              blog: { id: Date.now(), title: '', excerpt: '', date: new Date().toISOString().split('T')[0], image: 'https://via.placeholder.com/600x400' },
              gallery: { id: Date.now(), image: 'https://via.placeholder.com/600x600', caption: '', category: 'General' },
@@ -320,6 +342,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.service} value={editingItem.title} onChange={e => setEditingItem({...editingItem, title: e.target.value})} />
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.amount} (${t.sections.other})`} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} />
                       <textarea className="w-full p-3 border rounded-lg h-32 bg-white text-gray-900 border-gray-300" placeholder={t.description} value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
+                      
+                      <div className="pt-4 border-t border-gray-100">
+                          <h4 className="text-sm font-bold text-gray-400 uppercase mb-4">{t.mediaGallery}</h4>
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                              {editingItem.gallery?.map((media: any, idx: number) => (
+                                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
+                                      {media.type === 'image' ? (
+                                          <img src={media.url} className="w-full h-full object-cover" />
+                                      ) : (
+                                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                              <Video className="text-gray-400" />
+                                          </div>
+                                      )}
+                                      <button 
+                                          onClick={() => removeGalleryItem(idx)}
+                                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                      >
+                                          <X size={12} />
+                                      </button>
+                                  </div>
+                              ))}
+                          </div>
+                          <div className="flex gap-2">
+                              <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
+                                  <ImageIcon size={16} /> {t.addPhoto}
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files[0], 'image')} />
+                              </label>
+                              <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
+                                  <Video size={16} /> {t.addVideo}
+                                  <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files[0], 'video')} />
+                              </label>
+                          </div>
+                      </div>
                   </>
               )}
               {editType === 'product' && (

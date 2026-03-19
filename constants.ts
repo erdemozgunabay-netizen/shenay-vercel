@@ -104,6 +104,10 @@ export const TRANSLATIONS: Translations = {
       customerName: "Customer Name",
       address: "Address",
       items: "Items",
+      addPhoto: "Add Photo",
+      addVideo: "Add Video",
+      remove: "Remove",
+      mediaGallery: "Media Gallery",
       addItem: "+ Add Item",
       printDownload: "Print / Download PDF",
       legalInfo: "Legal Company Info",
@@ -402,6 +406,10 @@ export const TRANSLATIONS: Translations = {
       customerName: "Müşteri Adı",
       address: "Adres",
       items: "Kalemler",
+      addPhoto: "Fotoğraf Ekle",
+      addVideo: "Video Ekle",
+      remove: "Kaldır",
+      mediaGallery: "Medya Galerisi",
       addItem: "+ Kalem Ekle",
       printDownload: "Yazdır / PDF İndir",
       legalInfo: "Yasal Firma Bilgileri",
@@ -700,6 +708,10 @@ export const TRANSLATIONS: Translations = {
       customerName: "Kundenname",
       address: "Adresse",
       items: "Positionen",
+      addPhoto: "Foto hinzufügen",
+      addVideo: "Video hinzufügen",
+      remove: "Entfernen",
+      mediaGallery: "Mediengalerie",
       addItem: "+ Position hinzufügen",
       printDownload: "Drucken / PDF herunterladen",
       legalInfo: "Rechtliche Firmeninformationen",
@@ -938,9 +950,9 @@ export const SERVICES: Service[] = [
     description: "Der perfekte Look für Ihren besonderen Tag. Inklusive Probe und Gesichtsanalyse.",
     longDescription: "Wir stehen Ihnen mit unserem professionellen Braut-Make-up- und Haarstyling-Service zur Seite, damit Sie an Ihrem Hochzeitstag den einzigartigen Look erhalten, von dem Sie träumen. Gemeinsam mit Probeterminen ermitteln wir das Make-up, das am besten zu Ihren Gesichtszügen, dem Stil Ihres Brautkleides und Ihrem Hochzeitskonzept passt. Mit weltberühmten Kosmetikmarken bieten wir eine Arbeit an, die die ganze Nacht hält, auf Fotos makellos aussieht und vor allem Ihre natürliche Schönheit hervorhebt.",
     gallery: [
-       "https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?q=80&w=2036&auto=format&fit=crop",
-       "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=2070&auto=format&fit=crop",
-       "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069&auto=format&fit=crop"
+       { url: "https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?q=80&w=2036&auto=format&fit=crop", type: 'image' },
+       { url: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=2070&auto=format&fit=crop", type: 'image' },
+       { url: "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069&auto=format&fit=crop", type: 'image' }
     ],
     image: "https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?q=80&w=2036&auto=format&fit=crop"
   },
@@ -950,8 +962,8 @@ export const SERVICES: Service[] = [
     description: "Strahlende Haut durch Tiefenreinigung und Hydratisierung.",
     longDescription: "Aquafacial ist eine medizinische Hautpflegeanwendung, die die Haut tiefenwirksam reinigt, peelt, extrahiert und mit Feuchtigkeit versorgt. Dank spezieller Aufsätze befreit es Ihre Haut von abgestorbenen Zellen und pumpt gleichzeitig Vitamine, Mineralien und Hyaluronsäure in die unteren Hautschichten. Das Ergebnis: Sofort hellere, sauberere und lebendigere Haut.",
     gallery: [
-       "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=2070&auto=format&fit=crop",
-       "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop"
+       { url: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=2070&auto=format&fit=crop", type: 'image' },
+       { url: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop", type: 'image' }
     ],
     image: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=2070&auto=format&fit=crop"
   },
@@ -961,8 +973,8 @@ export const SERVICES: Service[] = [
     description: "Professioneller Touch für vollere Brauen und geschwungene Wimpern.",
     longDescription: "Lernen Sie unsere Dienstleistungen Lash Lifting (Wimpernlifting) und Brow Lamination (Augenbrauenlaminierung) kennen, um Ihren Blick eindrucksvoller zu machen. Während Ihre Wimpern von der Wurzel bis zur Spitze geschwungen werden und so länger und voluminöser erscheinen, werden Ihre Augenbrauen nach oben gekämmt, fixiert und erhalten eine vollere Form. Der Effekt hält durchschnittlich 6-8 Wochen an.",
     gallery: [
-       "https://images.unsplash.com/photo-1588510002166-5121287130eb?q=80&w=1974&auto=format&fit=crop",
-       "https://images.unsplash.com/photo-1596436570226-f78a87383637?q=80&w=2074&auto=format&fit=crop"
+       { url: "https://images.unsplash.com/photo-1588510002166-5121287130eb?q=80&w=1974&auto=format&fit=crop", type: 'image' },
+       { url: "https://images.unsplash.com/photo-1596436570226-f78a87383637?q=80&w=2074&auto=format&fit=crop", type: 'image' }
     ],
     image: "https://images.unsplash.com/photo-1588510002166-5121287130eb?q=80&w=1974&auto=format&fit=crop"
   },
@@ -972,8 +984,8 @@ export const SERVICES: Service[] = [
     description: "Lernen Sie, das Make-up aufzutragen, das am besten zu Ihrem Gesicht passt.",
     longDescription: "In unseren Make-up-Workshops, die einzeln oder in Gruppen organisiert werden, entdecken Sie Ihren eigenen Gesichtstyp, Ihren Hautunterton und die Farben, die am besten zu Ihnen passen. Wir lehren praktisch Themen wie die richtige Pinselverwendung, Foundation-Wahl, Eyeliner-Techniken und die Verwandlung von Tages- zu Abend-Make-up.",
     gallery: [
-       "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=2070&auto=format&fit=crop",
-       "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop"
+       { url: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=2070&auto=format&fit=crop", type: 'image' },
+       { url: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop", type: 'image' }
     ],
     image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=2070&auto=format&fit=crop"
   }

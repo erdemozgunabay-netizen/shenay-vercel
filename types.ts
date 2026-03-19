@@ -93,6 +93,10 @@ export interface TranslationStructure {
     customerName: string;
     address: string;
     items: string;
+    addPhoto: string;
+    addVideo: string;
+    remove: string;
+    mediaGallery: string;
     addItem: string;
     printDownload: string;
     legalInfo: string;
@@ -368,12 +372,17 @@ export interface AdBanner {
 
 // Ensure ID is number for backward compatibility, but Firestore uses strings usually.
 // We will handle string/number conversion in services.
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
+
 export interface Service {
   id: number; 
   title: string;
   description: string;
   longDescription?: string;
-  gallery?: string[];
+  gallery?: MediaItem[];
   image: string;
   price?: string;
 }
