@@ -12,18 +12,18 @@ import { Menu, Instagram, Mail, Lock, ArrowRight, MapPin, Phone, ShoppingBag, Ch
 
 const INITIAL_CONFIG: SiteConfig = {
   siteTitle: "", 
-  heroTitle: TRANSLATIONS['tr'].hero.title,
-  heroSubtitle: TRANSLATIONS['tr'].hero.subtitle,
+  heroTitle: TRANSLATIONS['de'].hero.title,
+  heroSubtitle: TRANSLATIONS['de'].hero.subtitle,
   heroImage: HERO_IMAGE,
   heroVideo: null,
   aboutImage: ABOUT_IMAGE, 
   aboutText: DEFAULT_ABOUT_TEXT,
-  footerBio: "Bridal Room & Academy.\nProfessional Makeup Artist.\nSkin Care Expert.",
+  footerBio: "Bridal Room & Academy.\nProfessionelle Visagistin.\nExpertin für Hautpflege.",
   contactEmail: "contact@shenayileri.com",
   contactPhone: PHONE_NUMBER,
-  contactAddress: "Germany",
+  contactAddress: "Deutschland",
   newsletterTitle: "Newsletter",
-  newsletterText: "Subscribe for beauty tips and updates.",
+  newsletterText: "Abonnieren Sie für Schönheitstipps und Updates.",
   ads: MOCK_ADS,
   themeColor: 'gold',
   services: SERVICES,
@@ -45,12 +45,12 @@ const INITIAL_CONFIG: SiteConfig = {
     vatId: "DE 123 456 789",
     jurisdiction: "Berlin",
     companyName: "Shenay Ileri Beauty",
-    companyAddress: "Example Street, Berlin"
+    companyAddress: "Beispielstraße, Berlin"
   }
 };
 
 const App = () => {
-  const [lang, setLang] = useState<LanguageCode>('tr'); 
+  const [lang, setLang] = useState<LanguageCode>('de'); 
   const [view, setView] = useState<'home' | 'services' | 'products' | 'booking' | 'blog' | 'about' | 'app' | 'admin' | 'returns' | 'service-detail' | 'blog-detail' | 'portfolio' | 'gallery' | 'contact'>('home');
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -213,7 +213,7 @@ const App = () => {
       case 'products': return <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} />;
       case 'booking': return <BookingSection t={t.sections} onBook={handleBookAppointment} />;
       case 'blog': return <BlogSection t={t.sections} posts={siteConfig.blogPosts} onPostClick={handlePostClick} />;
-      case 'about': return <AboutSection t={t.sections} image={siteConfig.aboutImage} text={siteConfig.aboutText} />;
+      case 'about': return <AboutSection t={t.sections} image={siteConfig.aboutImage} text={siteConfig.aboutText} config={siteConfig} />;
       case 'gallery': return <GallerySection t={t.sections} items={siteConfig.gallery} />;
       case 'contact': return <ContactSection t={t.contact} config={siteConfig} />;
       case 'returns': return <ReturnsSection t={t.returns} policyText={RETURN_POLICIES[lang]} onRequestSubmit={()=>{alert("Talep alındı")}} />;
@@ -252,12 +252,12 @@ const App = () => {
                             <div className="inline-flex items-center gap-2 bg-brand-dark text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
                                 <Sparkles size={14} className="text-brand-gold" /> AI Powered Beauty
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-serif mb-6 text-brand-dark">Sanal Güzellik Danışmanınız</h2>
+                            <h2 className="text-4xl md:text-5xl font-serif mb-6 text-brand-dark">{t.app.virtualConsultant}</h2>
                             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                                Yapay zeka destekli analiz aracımızla yüz şeklinizi, cilt tonunuzu ve size en çok yakışan renkleri keşfedin. Fotoğrafınızı yükleyin, profesyonel öneriler anında cebinize gelsin.
+                                {t.app.aiDesc}
                             </p>
                             <button onClick={()=>setView('app')} className="bg-brand-dark text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition shadow-lg flex items-center gap-3 mx-auto md:mx-0">
-                                <Sparkles size={20} /> Ücretsiz Analiz Başlat
+                                <Sparkles size={20} /> {t.app.startFreeAnalysis}
                             </button>
                         </div>
                         <div className="md:w-1/2">
@@ -269,8 +269,8 @@ const App = () => {
                                         <CheckCircle size={24} />
                                     </div>
                                     <div>
-                                        <div className="font-bold text-brand-dark">Kişisel Rapor</div>
-                                        <div className="text-xs text-gray-500">%98 Eşleşme Başarısı</div>
+                                        <div className="font-bold text-brand-dark">{t.app.personalReport}</div>
+                                        <div className="text-xs text-gray-500">{t.app.matchSuccess}</div>
                                     </div>
                                 </div>
                             </div>
@@ -337,10 +337,10 @@ const App = () => {
 
        <footer className="bg-[#111] text-white py-12 border-t border-gray-800">
            <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8 text-sm">
-               <div><h3 className="text-xl font-serif text-brand-gold mb-4">{siteConfig.siteTitle}</h3><p className="text-gray-400 whitespace-pre-line">{siteConfig.footerBio}</p></div>
-               <div><h4 className="font-bold mb-4 uppercase text-gray-400">Menu</h4><ul className="space-y-2 text-gray-500"><li><button onClick={()=>setView('services')}>Hizmetler</button></li><li><button onClick={()=>setView('products')}>Ürünler</button></li><li><button onClick={()=>setView('gallery')}>Galeri</button></li></ul></div>
-               <div><h4 className="font-bold mb-4 uppercase text-gray-400">İletişim</h4><ul className="space-y-2 text-gray-500"><li>{siteConfig.contactAddress}</li><li>{siteConfig.contactPhone}</li><li>{siteConfig.contactEmail}</li></ul></div>
-               <div><h4 className="font-bold mb-4 uppercase text-gray-400">Yönetim</h4><button onClick={()=>setView('admin')} className="flex items-center gap-2 text-gray-500 hover:text-white"><Lock size={14}/> Admin Girişi</button></div>
+               <div><h3 className="text-xl font-serif text-brand-gold mb-4">{siteConfig.siteTitle || 'SHENAY ILERI'}</h3><p className="text-gray-400 whitespace-pre-line">{siteConfig.footerBio}</p></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">Menu</h4><ul className="space-y-2 text-gray-500"><li><button onClick={()=>setView('services')}>{t.nav.services}</button></li><li><button onClick={()=>setView('products')}>{t.nav.products}</button></li><li><button onClick={()=>setView('gallery')}>{t.nav.gallery}</button></li></ul></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">{t.nav.contact}</h4><ul className="space-y-2 text-gray-500"><li>{siteConfig.contactAddress}</li><li>{siteConfig.contactPhone}</li><li>{siteConfig.contactEmail}</li></ul></div>
+               <div><h4 className="font-bold mb-4 uppercase text-gray-400">{t.nav.admin}</h4><button onClick={()=>setView('admin')} className="flex items-center gap-2 text-gray-500 hover:text-white"><Lock size={14}/> {t.admin.loginTitle}</button></div>
            </div>
        </footer>
     </div>

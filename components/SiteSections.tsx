@@ -43,7 +43,7 @@ interface TestimonialsProps {
 export const TestimonialsSection: React.FC<TestimonialsProps> = ({ t, testimonials }) => (
     <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-            <h2 className="text-4xl font-serif text-center mb-16 gold-text-shadow text-brand-dark">{t.testimonialsTitle || "Müşterilerimiz Ne Diyor?"}</h2>
+            <h2 className="text-4xl font-serif text-center mb-16 gold-text-shadow text-brand-dark">{t.testimonialsTitle}</h2>
             <div className="grid md:grid-cols-3 gap-8">
                 {testimonials.map((testi) => (
                     <div key={testi.id} className="bg-gray-50 p-8 rounded-2xl relative border border-gray-100 shadow-sm hover:shadow-lg transition">
@@ -76,7 +76,7 @@ export const TeamSection: React.FC<TeamProps> = ({ t, team }) => (
     <div className="py-20 bg-brand-dark text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-makeup-pattern opacity-5"></div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-            <h2 className="text-4xl font-serif text-center mb-16 text-brand-gold">{t.teamTitle || "Ekibimizle Tanışın"}</h2>
+            <h2 className="text-4xl font-serif text-center mb-16 text-brand-gold">{t.teamTitle}</h2>
             <div className="grid md:grid-cols-3 gap-10">
                 {team.map((member) => (
                     <div key={member.id} className="group text-center">
@@ -102,12 +102,13 @@ export const TeamSection: React.FC<TeamProps> = ({ t, team }) => (
 
 // --- Service Detail Component ---
 interface ServiceDetailProps {
+    t: TranslationStructure['sections'];
     service: Service;
     onBack: () => void;
     onBookNow: () => void;
 }
 
-export const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, onBookNow }) => {
+export const ServiceDetail: React.FC<ServiceDetailProps> = ({ t, service, onBack, onBookNow }) => {
     return (
         <div className="min-h-screen bg-white">
             {/* Header / Hero */}
@@ -131,7 +132,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, o
                     {/* Description Column */}
                     <div className="md:col-span-2 space-y-8">
                         <div>
-                            <h2 className="text-2xl font-serif font-bold mb-4 text-brand-dark">Hizmet Detayları</h2>
+                            <h2 className="text-2xl font-serif font-bold mb-4 text-brand-dark">{t.serviceDetailsTitle}</h2>
                             <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
                                 {service.longDescription || service.description}
                             </p>
@@ -142,12 +143,12 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, o
                         {service.gallery && service.gallery.length > 0 && (
                             <div>
                                 <h3 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
-                                    <Image className="text-brand-gold" /> Galeri
+                                    <Image className="text-brand-gold" /> {t.galleryTitle}
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     {service.gallery.map((img, idx) => (
                                         <div key={idx} className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition aspect-square bg-gray-100">
-                                            <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover hover:scale-105 transition duration-500" />
+                                            <img src={img} alt={t.galleryAlt} className="w-full h-full object-cover hover:scale-105 transition duration-500" />
                                         </div>
                                     ))}
                                 </div>
@@ -158,17 +159,17 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, o
                     {/* Sidebar / CTA */}
                     <div className="md:col-span-1">
                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 sticky top-24 shadow-lg">
-                            <h3 className="font-serif text-xl font-bold mb-4">Randevu Al</h3>
-                            <p className="text-gray-500 text-sm mb-6">Bu hizmet için hemen yerinizi ayırtın. Profesyonel dokunuşlarla güzelliğinizi ortaya çıkarın.</p>
+                            <h3 className="font-serif text-xl font-bold mb-4">{t.bookNow}</h3>
+                            <p className="text-gray-500 text-sm mb-6">{t.bookDescription}</p>
                             <button 
                                 onClick={onBookNow}
                                 className="w-full bg-brand-dark text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition shadow-lg"
                             >
-                                Rezervasyon Yap
+                                {t.bookNow}
                             </button>
                             <div className="mt-6 pt-6 border-t border-gray-200 text-xs text-gray-400">
-                                <p className="mb-2 flex items-center gap-2"><Clock size={14} /> 7/24 Online Randevu</p>
-                                <p className="flex items-center gap-2"><Phone size={14} /> Destek için bize ulaşın</p>
+                                <p className="mb-2 flex items-center gap-2"><Clock size={14} /> {t.onlineBooking}</p>
+                                <p className="flex items-center gap-2"><Phone size={14} /> {t.supportContact}</p>
                             </div>
                         </div>
                     </div>
@@ -203,7 +204,7 @@ export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCar
         <div key={product.id} className="border border-gray-100 rounded-lg p-4 group hover:shadow-xl transition duration-300">
           <div className="aspect-square bg-gray-50 mb-4 rounded-lg overflow-hidden relative">
              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-             {product.stock === 0 && <div className="absolute inset-0 bg-white/70 flex items-center justify-center font-bold text-gray-500">STOKTA YOK</div>}
+             {product.stock === 0 && <div className="absolute inset-0 bg-white/70 flex items-center justify-center font-bold text-gray-500">{t.outOfStock}</div>}
              <button 
                 onClick={() => addToCart(product)}
                 disabled={product.stock === 0}
@@ -253,7 +254,7 @@ export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCar
              className="w-full bg-gray-900 text-white py-3 rounded text-sm hover:bg-brand-gold hover:text-black transition flex items-center justify-center gap-2 font-bold disabled:bg-gray-300 disabled:text-gray-500"
           >
              <ShoppingBag size={14} />
-             {product.stock === 0 ? 'TÜKENDİ' : t.buyBtn}
+             {product.stock === 0 ? t.soldOut : t.buyBtn}
           </button>
         </div>
       ))}
@@ -276,13 +277,16 @@ export const BookingSection: React.FC<BookingProps> = ({ t, onBook }) => {
     notes: ''
   });
 
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onBook) {
       onBook(formData);
-      alert(t.bookFormSuccess);
+      setIsSuccess(true);
       // Reset form
       setFormData({ ...formData, name: '', phone: '', date: '', notes: '' });
+      setTimeout(() => setIsSuccess(false), 5000);
     }
   };
 
@@ -290,6 +294,11 @@ export const BookingSection: React.FC<BookingProps> = ({ t, onBook }) => {
     <div className="py-20 max-w-3xl mx-auto px-4">
       <div className="bg-white p-10 rounded-3xl shadow-2xl border border-gray-100">
         <h2 className="text-3xl font-serif text-center mb-8 text-brand-dark">{t.bookTitle}</h2>
+        {isSuccess && (
+          <div className="mb-8 p-4 bg-green-50 text-green-700 rounded-xl border border-green-100 text-center font-bold animate-fade-in">
+            {t.bookFormSuccess}
+          </div>
+        )}
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-2 gap-6">
              <div>
@@ -370,10 +379,10 @@ export const BookingSection: React.FC<BookingProps> = ({ t, onBook }) => {
           </div>
           
           <div>
-              <label className="block text-xs uppercase font-bold text-gray-500 mb-2">Notlar (Opsiyonel)</label>
+              <label className="block text-xs uppercase font-bold text-gray-500 mb-2">{t.sections.notesLabel}</label>
               <textarea 
                  className="w-full p-4 bg-gray-50 rounded-xl border-gray-200 h-24 resize-none focus:border-brand-gold focus:bg-white transition outline-none"
-                 placeholder="Eklemek istedikleriniz..."
+                 placeholder={t.sections.notesPlaceholder}
                  value={formData.notes}
                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
               />
@@ -417,10 +426,11 @@ export const BlogSection: React.FC<BlogProps> = ({ t, posts, onPostClick }) => (
 
 // --- Blog Detail Component ---
 interface BlogDetailProps {
+    t: TranslationStructure['sections'];
     post: BlogPost;
     onBack: () => void;
 }
-export const BlogDetail: React.FC<BlogDetailProps> = ({ post, onBack }) => {
+export const BlogDetail: React.FC<BlogDetailProps> = ({ t, post, onBack }) => {
     return (
         <div className="min-h-screen bg-white pb-20">
             <div className="relative h-[40vh] md:h-[50vh]">
@@ -428,7 +438,7 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ post, onBack }) => {
                 <div className="absolute inset-0 bg-black/50 flex flex-col justify-end p-6 md:p-12">
                    <div className="max-w-4xl mx-auto w-full">
                        <button onClick={onBack} className="text-white/80 hover:text-white mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-widest backdrop-blur-sm bg-white/10 px-4 py-2 rounded-full w-fit">
-                           <ChevronLeft size={16} /> Geri Dön
+                           <ChevronLeft size={16} /> {t.goBack}
                        </button>
                        <span className="text-brand-gold font-bold uppercase tracking-wider text-sm bg-black/50 px-3 py-1 rounded mb-2 inline-block">{post.date}</span>
                        <h1 className="text-3xl md:text-5xl font-serif text-white leading-tight">{post.title}</h1>
@@ -450,12 +460,12 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ post, onBack }) => {
                 {post.gallery && post.gallery.length > 0 && (
                     <div className="mt-12 pt-12 border-t border-gray-100">
                         <h3 className="text-2xl font-serif font-bold mb-6 flex items-center gap-2">
-                             <Image size={24} className="text-brand-gold" /> Galeri
+                             <Image size={24} className="text-brand-gold" /> {t.galleryTitle}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {post.gallery.map((img, idx) => (
                                 <div key={idx} className="rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition">
-                                    <img src={img} alt={`Gallery ${idx}`} className="w-full h-auto object-cover hover:scale-105 transition duration-500" />
+                                    <img src={img} alt={t.galleryAlt} className="w-full h-auto object-cover hover:scale-105 transition duration-500" />
                                 </div>
                             ))}
                         </div>
@@ -464,7 +474,7 @@ export const BlogDetail: React.FC<BlogDetailProps> = ({ post, onBack }) => {
 
                 <div className="mt-12 flex justify-center">
                     <button className="flex items-center gap-2 text-gray-500 hover:text-brand-dark transition text-sm font-bold uppercase tracking-widest">
-                        <Share2 size={16} /> Paylaş
+                        <Share2 size={16} /> {t.share}
                     </button>
                 </div>
             </div>
@@ -477,8 +487,9 @@ interface AboutProps {
   t: TranslationStructure['sections'];
   image: string;
   text: string;
+  config: SiteConfig;
 }
-export const AboutSection: React.FC<AboutProps> = ({ t, image, text }) => (
+export const AboutSection: React.FC<AboutProps> = ({ t, image, text, config }) => (
   <div className="py-24 max-w-7xl mx-auto px-4 bg-gradient-to-b from-white to-rose-50/50">
      <div className="grid md:grid-cols-2 gap-12 items-center">
         <div className="relative group">
@@ -487,7 +498,7 @@ export const AboutSection: React.FC<AboutProps> = ({ t, image, text }) => (
            <img src={image} alt="Shenay Ileri" className="w-full h-[600px] object-cover rounded-lg shadow-2xl" />
         </div>
         <div>
-           <div className="inline-block bg-brand-gold/10 text-brand-gold px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Professional Artist</div>
+           <div className="inline-block bg-brand-gold/10 text-brand-gold px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">{t.professionalArtist}</div>
            <h2 className="text-4xl md:text-5xl font-serif mb-8 leading-tight text-brand-dark">{t.aboutTitle}</h2>
            <p className="text-gray-600 leading-relaxed mb-8 whitespace-pre-line text-lg">
              {text}
@@ -501,8 +512,8 @@ export const AboutSection: React.FC<AboutProps> = ({ t, image, text }) => (
              ))}
            </ul>
            <div className="flex gap-4">
-              <a href="#" className="p-3 bg-black text-white rounded-full hover:bg-brand-gold hover:text-black transition transform hover:-translate-y-1"><Instagram size={20} /></a>
-              <a href="#" className="p-3 bg-black text-white rounded-full hover:bg-brand-gold hover:text-black transition transform hover:-translate-y-1"><Mail size={20} /></a>
+              <a href={`https://instagram.com/${config.instagramUser || ''}`} target="_blank" rel="noreferrer" className="p-3 bg-black text-white rounded-full hover:bg-brand-gold hover:text-black transition transform hover:-translate-y-1"><Instagram size={20} /></a>
+              <a href={`mailto:${config.contactEmail}`} className="p-3 bg-black text-white rounded-full hover:bg-brand-gold hover:text-black transition transform hover:-translate-y-1"><Mail size={20} /></a>
            </div>
         </div>
      </div>
@@ -516,17 +527,17 @@ interface GalleryProps {
 }
 export const GallerySection: React.FC<GalleryProps> = ({ t, items }) => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [filter, setFilter] = useState('All');
+    const [filter, setFilter] = useState(t.all);
     
     // Extract unique categories
-    const categories = ['All', ...new Set(items.map(i => i.category || 'Other'))];
-    const filteredItems = filter === 'All' ? items : items.filter(i => (i.category || 'Other') === filter);
+    const categories = [t.all, ...new Set(items.map(i => i.category || t.other))];
+    const filteredItems = filter === t.all ? items : items.filter(i => (i.category || t.other) === filter);
 
     return (
         <div className="py-20 bg-white">
             <div className="max-w-7xl mx-auto px-4">
                 <h2 className="text-4xl font-serif text-center mb-4 gold-text-shadow text-brand-dark">{t.galleryTitle}</h2>
-                <p className="text-center text-gray-500 mb-8 max-w-2xl mx-auto">Güzelliğin en doğal ve etkileyici hallerine tanıklık edin. İşte çalışmalarımızdan seçkiler.</p>
+                <p className="text-center text-gray-500 mb-8 max-w-2xl mx-auto">{t.gallerySubtitle}</p>
                 
                 {/* Category Filter */}
                 <div className="flex justify-center gap-2 mb-10 flex-wrap">
@@ -548,7 +559,7 @@ export const GallerySection: React.FC<GalleryProps> = ({ t, items }) => {
                             className="break-inside-avoid relative group cursor-pointer overflow-hidden rounded-xl"
                             onClick={() => setSelectedImage(item.image)}
                         >
-                            <img src={item.image} alt={item.caption || "Gallery"} className="w-full h-auto object-cover transition duration-700 group-hover:scale-110" />
+                            <img src={item.image} alt={item.caption || t.galleryAlt} className="w-full h-auto object-cover transition duration-700 group-hover:scale-110" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
                                 <ZoomIn className="text-white" size={32} />
                             </div>
@@ -622,7 +633,7 @@ export const ContactSection: React.FC<ContactProps> = ({ t, config }) => {
                         </div>
 
                         <div className="mt-12">
-                            <h4 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-4">Follow Us</h4>
+                            <h4 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-4">{t.followUs}</h4>
                             <div className="flex gap-4">
                                 <a href="https://instagram.com" className="bg-white/10 p-2 rounded-full hover:bg-brand-gold hover:text-black transition"><Instagram size={20} /></a>
                             </div>
@@ -630,8 +641,8 @@ export const ContactSection: React.FC<ContactProps> = ({ t, config }) => {
                     </div>
 
                     <div className="p-12 md:w-3/5 flex flex-col justify-center items-center text-center">
-                         <h3 className="text-2xl font-serif text-brand-dark mb-6">WhatsApp ile Hızlı İletişim</h3>
-                         <p className="text-gray-500 mb-8">Randevu almak veya bilgi sormak için WhatsApp üzerinden bize yazabilirsiniz.</p>
+                         <h3 className="text-2xl font-serif text-brand-dark mb-6">{t.whatsappTitle}</h3>
+                         <p className="text-gray-500 mb-8">{t.whatsappDesc}</p>
                          <a 
                             href={`https://wa.me/${config.contactPhone.replace(/[^0-9]/g, '')}`} 
                             target="_blank" 

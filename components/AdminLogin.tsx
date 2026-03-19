@@ -50,7 +50,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ t, onLogin }) => {
       onLogin();
     } catch (err: any) {
       console.error(err);
-      setError("Hatalı email veya şifre.");
+      setError(t.loginError);
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       
@@ -83,7 +83,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ t, onLogin }) => {
                  <h3 className="text-lg font-bold font-serif mb-2">{t.recoveryTitle}</h3>
                  <p className="text-sm text-gray-500 mb-6">{t.recoveryDesc}</p>
                  <a href="mailto:support@shenayileri.com" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm block w-full hover:bg-blue-700 transition">
-                    Email Support
+                    {t.emailSupport}
                  </a>
               </div>
            </div>
@@ -102,12 +102,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ t, onLogin }) => {
         {isLocked ? (
           <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center border border-red-100 mb-4 animate-pulse">
             <h4 className="font-bold text-sm mb-1">{t.lockedMessage}</h4>
-            <p className="text-xs font-mono">Try again in {lockTimer}s</p>
+            <p className="text-xs font-mono">{t.tryAgainIn} {lockTimer}s</p>
           </div>
         ) : (
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-xs uppercase font-bold text-gray-400 mb-2 tracking-wide">Email</label>
+              <label className="block text-xs uppercase font-bold text-gray-400 mb-2 tracking-wide">{t.emailLabel}</label>
               <div className="relative">
                 <input 
                     type="email" 
