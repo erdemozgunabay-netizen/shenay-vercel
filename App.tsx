@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TRANSLATIONS, MOCK_ADS, HERO_IMAGE, ABOUT_IMAGE, DEFAULT_ABOUT_TEXT, INSTAGRAM_LINK, PHONE_NUMBER, SERVICES, PRODUCTS, BLOG_POSTS, RETURN_POLICIES, GALLERY_ITEMS } from './constants';
 import { LanguageCode, SiteConfig, Order, CartItem, Product, CustomerDetails, ReturnRequest, Appointment } from './types';
 import { AdminDashboard } from './components/AdminDashboard';
-import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSection, ReturnsSection, ServiceDetail, BlogDetail, GallerySection, ContactSection, TestimonialsSection, TeamSection } from './components/SiteSections';
+import { ServicesSection, ProductsSection, BookingSection, BlogSection, AboutSection, ReturnsSection, ServiceDetail, BlogDetail, ProductDetail, GallerySection, ContactSection, TestimonialsSection, TeamSection } from './components/SiteSections';
 import { MakeupAnalyzer } from './components/MakeupAnalyzer';
 import { CartDrawer } from './components/CartDrawer';
 import { PaymentModal } from './components/PaymentModal';
@@ -54,6 +54,7 @@ const App = () => {
   const [view, setView] = useState<'home' | 'services' | 'products' | 'booking' | 'blog' | 'about' | 'app' | 'admin' | 'returns' | 'service-detail' | 'blog-detail' | 'portfolio' | 'gallery' | 'contact'>('home');
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -188,6 +189,7 @@ const App = () => {
 
   const handleServiceClick = (id: number) => { setSelectedServiceId(id); setView('service-detail'); window.scrollTo(0,0); };
   const handlePostClick = (id: number) => { setSelectedPostId(id); setView('blog-detail'); window.scrollTo(0,0); };
+  const handleProductClick = (id: number) => { setSelectedProductId(id); setView('product-detail'); window.scrollTo(0,0); };
 
   const NavButton = ({ targetView, label }: any) => (
     <button 
@@ -210,7 +212,7 @@ const App = () => {
       case 'app': return <MakeupAnalyzer t={t.app} paymentT={t.payment} lang={lang} paymentConfig={siteConfig.paymentConfig} />;
       case 'admin': return <AdminDashboard t={t.admin} siteConfig={siteConfig} setSiteConfig={setSiteConfig} isAuthenticated={isAuthenticated} onLogin={() => setIsAuthenticated(true)} onLogout={handleLogout} />;
       case 'services': return <ServicesSection t={t.sections} services={siteConfig.services} onServiceClick={handleServiceClick} />;
-      case 'products': return <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} />;
+      case 'products': return <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} onProductClick={handleProductClick} />;
       case 'booking': return <BookingSection t={t.sections} onBook={handleBookAppointment} />;
       case 'blog': return <BlogSection t={t.sections} posts={siteConfig.blogPosts} onPostClick={handlePostClick} />;
       case 'about': return <AboutSection t={t.sections} image={siteConfig.aboutImage} text={siteConfig.aboutText} config={siteConfig} />;
@@ -226,6 +228,11 @@ const App = () => {
         const post = siteConfig.blogPosts.find(p => String(p.id) === String(selectedPostId));
         if (!post) { setView('blog'); return null; }
         return <BlogDetail t={t.sections} post={post} onBack={() => setView('blog')} />;
+      }
+      case 'product-detail': {
+        const product = siteConfig.products.find(p => String(p.id) === String(selectedProductId));
+        if (!product) { setView('products'); return null; }
+        return <ProductDetail t={t.sections} product={product} onBack={() => setView('products')} onAddToCart={addToCart} />;
       }
       default: return (
           <>
@@ -294,7 +301,7 @@ const App = () => {
             
             <ServicesSection t={t.sections} services={siteConfig.services} onServiceClick={handleServiceClick} />
             
-            <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} />
+            <ProductsSection t={t.sections} products={siteConfig.products} addToCart={addToCart} onRate={()=>{}} onReturnClick={() => setView('returns')} onProductClick={handleProductClick} />
             
             <TestimonialsSection t={t.sections} testimonials={siteConfig.testimonials} />
 

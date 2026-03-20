@@ -45,7 +45,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ t, onLogin }) => {
     setError(null);
 
     try {
-      // Firebase Auth ile giriş
+      // Login mit Firebase Auth
       await authService.login(email, password);
       onLogin();
     } catch (err: any) {

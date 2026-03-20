@@ -131,20 +131,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       setLocalSettings({...localSettings, heroImage: b64});
   };
 
-  const handleGalleryMediaUpload = async (file: File, type: 'image' | 'video') => {
-    if (type === 'image') {
-      const b64 = await resizeImage(file);
-      const newGallery = [...(editingItem.gallery || []), { url: b64, type: 'image' }];
-      setEditingItem({ ...editingItem, gallery: newGallery });
-    } else {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (e) => {
-        const b64 = e.target?.result as string;
-        const newGallery = [...(editingItem.gallery || []), { url: b64, type: 'video' }];
-        setEditingItem({ ...editingItem, gallery: newGallery });
-      };
+  const handleGalleryMediaUpload = async (files: FileList, type: 'image' | 'video') => {
+    const newMedia = [];
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (type === 'image') {
+            const b64 = await resizeImage(file);
+            newMedia.push({ url: b64, type: 'image' });
+        } else {
+            const b64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => resolve(e.target?.result as string);
+            });
+            newMedia.push({ url: b64, type: 'video' });
+        }
     }
+    setEditingItem({ ...editingItem, gallery: [...(editingItem.gallery || []), ...newMedia] });
   };
 
   const removeGalleryItem = (index: number) => {
@@ -367,11 +370,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                           <div className="flex gap-2">
                               <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
                                   <ImageIcon size={16} /> {t.addPhoto}
-                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files[0], 'image')} />
+                                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'image')} />
                               </label>
                               <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
                                   <Video size={16} /> {t.addVideo}
-                                  <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files[0], 'video')} />
+                                  <input type="file" accept="video/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'video')} />
                               </label>
                           </div>
                       </div>
@@ -383,6 +386,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.amount} (${t.pricePlaceholder})`} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} />
                       <input type="number" className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.stock} value={editingItem.stock} onChange={e => setEditingItem({...editingItem, stock: parseInt(e.target.value)})} />
                       <textarea className="w-full p-3 border rounded-lg h-32 bg-white text-gray-900 border-gray-300" placeholder={t.description} value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
+                      
+                      <div className="pt-4 border-t border-gray-100">
+                          <h4 className="text-sm font-bold text-gray-400 uppercase mb-4">{t.mediaGallery}</h4>
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                              {editingItem.gallery?.map((media: any, idx: number) => (
+                                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
+                                      {media.type === 'image' ? (
+                                          <img src={media.url} className="w-full h-full object-cover" />
+                                      ) : (
+                                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                              <Video className="text-gray-400" />
+                                          </div>
+                                      )}
+                                      <button 
+                                          onClick={() => removeGalleryItem(idx)}
+                                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                      >
+                                          <X size={12} />
+                                      </button>
+                                  </div>
+                              ))}
+                          </div>
+                          <div className="flex gap-2">
+                              <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
+                                  <ImageIcon size={16} /> {t.addPhoto}
+                                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'image')} />
+                              </label>
+                              <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg cursor-pointer transition text-xs font-bold">
+                                  <Video size={16} /> {t.addVideo}
+                                  <input type="file" accept="video/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'video')} />
+                              </label>
+                          </div>
+                      </div>
                   </>
               )}
               {editType === 'blog' && (

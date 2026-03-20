@@ -3,27 +3,27 @@ import { auth } from '../firebase'; // Centralized instance
 
 export const authService = {
   /**
-   * Firebase ile Admin girişi yap.
+   * Admin-Login mit Firebase.
    */
   login: async (email: string, pass: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       return userCredential.user;
     } catch (error: any) {
-      console.error("Giriş Hatası:", error.code, error.message);
-      throw new Error("Giriş başarısız: " + error.message);
+      console.error("Login-Fehler:", error.code, error.message);
+      throw new Error("Login fehlgeschlagen: " + error.message);
     }
   },
 
   /**
-   * Çıkış yap.
+   * Abmelden.
    */
   logout: async () => {
     await signOut(auth);
   },
 
   /**
-   * Oturum durumunu dinle (Firebase Listener).
+   * Authentifizierungsstatus überwachen (Firebase Listener).
    */
   observeAuth: (callback: (isAuthenticated: boolean, user: User | null) => void) => {
     return onAuthStateChanged(auth, (user) => {

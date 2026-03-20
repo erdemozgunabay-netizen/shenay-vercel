@@ -394,6 +394,7 @@ export interface Product {
   description: string;
   price: string;
   image: string;
+  gallery?: MediaItem[];
   rating: number;
   orderCount: number; 
   voteCount: number; 

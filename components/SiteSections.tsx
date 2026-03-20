@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranslationStructure, Service, Product, BlogPost, ReturnRequest, Appointment, GalleryItem, SiteConfig, Testimonial, TeamMember } from '../types';
-import { Star, ShoppingBag, Calendar, Clock, Instagram, Mail, ArrowRight, User, Package, Phone, RefreshCw, ChevronLeft, Image, Share2, ZoomIn, MapPin, X, Quote } from 'lucide-react';
+import { Star, ShoppingBag, Calendar, Clock, Instagram, Mail, ArrowRight, User, Package, Phone, RefreshCw, ChevronLeft, Image, Share2, ZoomIn, MapPin, X, Quote, Play } from 'lucide-react';
 
 // --- Services Component ---
 interface ServicesProps {
@@ -192,8 +192,9 @@ interface ProductsProps {
   addToCart: (product: Product) => void;
   onRate: (productId: number, rating: number) => void;
   onReturnClick: () => void;
+  onProductClick?: (id: number) => void;
 }
-export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCart, onRate, onReturnClick }) => (
+export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCart, onRate, onReturnClick, onProductClick }) => (
   <div className="py-20 max-w-7xl mx-auto px-4 bg-white">
     <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
       <h2 className="text-4xl font-serif text-center md:text-left gold-text-shadow text-brand-dark">{t.productsTitle}</h2>
@@ -207,14 +208,21 @@ export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCar
     </div>
     <div className="grid md:grid-cols-3 gap-10">
       {products.map((product) => (
-        <div key={product.id} className="border border-gray-100 rounded-lg p-4 group hover:shadow-xl transition duration-300">
+        <div 
+            key={product.id} 
+            className="border border-gray-100 rounded-lg p-4 group hover:shadow-xl transition duration-300 cursor-pointer"
+            onClick={() => onProductClick && onProductClick(product.id)}
+        >
           <div className="aspect-square bg-gray-50 mb-4 rounded-lg overflow-hidden relative">
-             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+             <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
              {product.stock === 0 && <div className="absolute inset-0 bg-white/70 flex items-center justify-center font-bold text-gray-500">{t.outOfStock}</div>}
              <button 
-                onClick={() => addToCart(product)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(product);
+                }}
                 disabled={product.stock === 0}
-                className="absolute bottom-4 right-4 bg-black text-white p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition transform translate-y-4 group-hover:translate-y-0 hover:bg-brand-gold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="absolute bottom-4 right-4 bg-black text-white p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition transform translate-y-4 group-hover:translate-y-0 hover:bg-brand-gold disabled:bg-gray-400 disabled:cursor-not-allowed z-10"
              >
                <ShoppingBag size={20} />
              </button>
@@ -240,7 +248,10 @@ export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCar
              {[1, 2, 3, 4, 5].map((star) => (
                <button
                  key={star}
-                 onClick={() => onRate(product.id, star)}
+                 onClick={(e) => {
+                    e.stopPropagation();
+                    onRate(product.id, star);
+                 }}
                  className="focus:outline-none transition transform hover:scale-110 active:scale-90"
                >
                  <Star 
@@ -251,22 +262,139 @@ export const ProductsSection: React.FC<ProductsProps> = ({ t, products, addToCar
                  />
                </button>
              ))}
-             <span className="text-gray-400 text-xs ml-2">({product.rating.toFixed(1)})</span>
+             <span className="text-xs font-bold text-gray-500 ml-1">{product.rating.toFixed(1)}</span>
           </div>
-
+          
           <button 
-             onClick={() => addToCart(product)}
+             onClick={(e) => {
+                e.stopPropagation();
+                addToCart(product);
+             }}
              disabled={product.stock === 0}
              className="w-full bg-gray-900 text-white py-3 rounded text-sm hover:bg-brand-gold hover:text-black transition flex items-center justify-center gap-2 font-bold disabled:bg-gray-300 disabled:text-gray-500"
           >
-             <ShoppingBag size={14} />
-             {product.stock === 0 ? t.soldOut : t.buyBtn}
+            <ShoppingBag size={16} />
+            {product.stock === 0 ? t.soldOut : t.buyBtn}
           </button>
         </div>
       ))}
     </div>
   </div>
 );
+
+// --- Product Detail Component ---
+interface ProductDetailProps {
+    t: TranslationStructure['sections'];
+    product: Product;
+    onBack: () => void;
+    onAddToCart: (product: Product) => void;
+}
+export const ProductDetail: React.FC<ProductDetailProps> = ({ t, product, onBack, onAddToCart }) => {
+    const [activeMedia, setActiveMedia] = useState(product.image);
+    const [activeType, setActiveType] = useState<'image' | 'video'>('image');
+
+    return (
+        <div className="py-20 bg-white min-h-screen">
+            <div className="max-w-7xl mx-auto px-4">
+                <button onClick={onBack} className="flex items-center gap-2 text-gray-500 hover:text-brand-dark mb-10 transition group">
+                    <ChevronLeft className="group-hover:-translate-x-1 transition" /> {t.goBack}
+                </button>
+
+                <div className="grid md:grid-cols-2 gap-16">
+                    {/* Media Gallery */}
+                    <div className="space-y-6">
+                        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 shadow-2xl border border-gray-100 relative group">
+                            {activeType === 'image' ? (
+                                <img src={activeMedia} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <video src={activeMedia} controls autoPlay className="w-full h-full object-cover" />
+                            )}
+                            {product.stock === 0 && (
+                                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
+                                    <span className="bg-red-500 text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest shadow-xl">{t.soldOut}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {product.gallery && product.gallery.length > 0 && (
+                            <div className="grid grid-cols-4 gap-4">
+                                <div 
+                                    className={`aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition ${activeMedia === product.image ? 'border-brand-gold shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                    onClick={() => { setActiveMedia(product.image); setActiveType('image'); }}
+                                >
+                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                </div>
+                                {product.gallery.map((item, idx) => (
+                                    <div 
+                                        key={idx}
+                                        className={`aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition relative group ${activeMedia === item.url ? 'border-brand-gold shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                        onClick={() => { setActiveMedia(item.url); setActiveType(item.type); }}
+                                    >
+                                        {item.type === 'image' ? (
+                                            <img src={item.url} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                                <Play size={24} className="text-brand-gold" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex flex-col justify-center">
+                        <div className="inline-block bg-brand-gold/10 text-brand-gold px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Premium Collection</div>
+                        <h1 className="text-5xl font-serif mb-4 text-brand-dark">{product.name}</h1>
+                        
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star key={star} size={18} fill={star <= Math.round(product.rating) ? "#FACC15" : "none"} className={star <= Math.round(product.rating) ? "text-yellow-400" : "text-gray-300"} />
+                                ))}
+                                <span className="ml-2 font-bold text-brand-dark">{product.rating.toFixed(1)}</span>
+                            </div>
+                            <div className="h-4 w-px bg-gray-200"></div>
+                            <span className="text-gray-500 text-sm">{product.voteCount} Reviews</span>
+                            <div className="h-4 w-px bg-gray-200"></div>
+                            <span className="text-gray-500 text-sm">{product.orderCount} Orders</span>
+                        </div>
+
+                        <div className="text-4xl font-serif font-bold text-brand-gold mb-8">{product.price}</div>
+                        
+                        <div className="prose prose-rose mb-10">
+                            <p className="text-gray-600 text-lg leading-relaxed">{product.description}</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <button 
+                                onClick={() => onAddToCart(product)}
+                                disabled={product.stock === 0}
+                                className="w-full bg-brand-dark text-white py-5 rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition shadow-2xl disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                            >
+                                <ShoppingBag size={24} />
+                                {t.buyBtn}
+                            </button>
+                            
+                            <div className="flex items-center justify-center gap-6 pt-6 border-t border-gray-100">
+                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <Package size={14} /> Free Shipping
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <RefreshCw size={14} /> 14 Days Return
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <Share2 size={14} /> Share Product
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // --- Booking Component ---
 interface BookingProps {

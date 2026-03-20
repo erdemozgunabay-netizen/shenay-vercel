@@ -36,7 +36,7 @@ export const addItem = async (colName: string, item: any) => {
     // But for this simplified CMS, we check auth for "Content" items.
     // For public submissions (Appointments), we bypass if user is not admin in the calling component or allow writes via security rules.
     // Here we will allow if current user is present OR if it's the 'appointments' collection
-    if (colName !== 'appointments' && !auth.currentUser) throw new Error("Yetkisiz erişim: Önce giriş yapın.");
+    if (colName !== 'appointments' && !auth.currentUser) throw new Error("Nicht autorisierter Zugriff: Bitte melden Sie sich zuerst an.");
     
     const docId = item.id ? item.id.toString() : Date.now().toString();
     const itemToSave = { ...item, id: item.id || parseInt(docId) }; 
@@ -44,12 +44,12 @@ export const addItem = async (colName: string, item: any) => {
 };
 
 const deleteItem = async (colName: string, id: string | number) => {
-    if (!auth.currentUser) throw new Error("Yetkisiz erişim.");
+    if (!auth.currentUser) throw new Error("Nicht autorisierter Zugriff.");
     await deleteDoc(doc(db, colName, id.toString()));
 };
 
 export const saveSettingsToFirestore = async (settings: FirestoreSettings) => {
-    if (!auth.currentUser) throw new Error("Yetkisiz erişim");
+    if (!auth.currentUser) throw new Error("Nicht autorisierter Zugriff");
     const cleanSettings = JSON.parse(JSON.stringify(settings)); // Remove undefined
     await setDoc(doc(db, "settings", "global"), cleanSettings, { merge: true });
 };
