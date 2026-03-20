@@ -95,64 +95,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
       if (siteConfig.invoiceConfig) setInvoiceConfig(siteConfig.invoiceConfig);
   }, [siteConfig]);
 
-  const resizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1200; // Increased resolution for hero images
-                const scaleSize = MAX_WIDTH / img.width;
-                canvas.width = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
-                canvas.height = img.width > MAX_WIDTH ? img.height * scaleSize : img.height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
-            };
-        };
-    });
-  };
-
   const handleImageUpload = async (file: File) => {
-      const b64 = await resizeImage(file);
-      setEditingItem({ ...editingItem, image: b64 });
+      try {
+          const url = await storageService.uploadFile(file);
+          if (editType === 'banner') {
+              setEditingItem({ ...editingItem, imageUrl: url });
+          } else {
+              setEditingItem({ ...editingItem, image: url });
+          }
+      } catch (error) {
+          console.error("Upload error:", error);
+          alert(`Error uploading ${file.name}: ${error}`);
+      }
   };
   
   const handleProfileImageUpload = async (file: File) => {
-      const b64 = await resizeImage(file);
-      setLocalSettings({...localSettings, aboutImage: b64});
+      try {
+          const url = await storageService.uploadFile(file);
+          setLocalSettings({...localSettings, aboutImage: url});
+      } catch (error) {
+          console.error("Upload error:", error);
+          alert(`Error uploading ${file.name}: ${error}`);
+      }
   };
 
   const handleHeroImageUpload = async (file: File) => {
-      const b64 = await resizeImage(file);
-      setLocalSettings({...localSettings, heroImage: b64});
+      try {
+          const url = await storageService.uploadFile(file);
+          setLocalSettings({...localSettings, heroImage: url});
+      } catch (error) {
+          console.error("Upload error:", error);
+          alert(`Error uploading ${file.name}: ${error}`);
+      }
   };
 
   const handleGalleryMediaUpload = async (files: FileList, type: 'image' | 'video') => {
     const newMedia = [];
-    const MAX_FILE_SIZE = 800 * 1024; // 800KB limit to stay under Firestore 1MB document limit
     
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        if (file.size > MAX_FILE_SIZE) {
-            alert(`File "${file.name}" is too large. Firestore limit is 1MB total per document. Please use a smaller file or a video URL.`);
-            continue;
-        }
-
-        if (type === 'image') {
-            const b64 = await resizeImage(file);
-            newMedia.push({ url: b64, type: 'image' });
-        } else {
-            const b64 = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => resolve(e.target?.result as string);
-            });
-            newMedia.push({ url: b64, type: 'video' });
+        try {
+            // Always upload to Firebase Storage to avoid Firestore 1MB document limit
+            const url = await storageService.uploadFile(file);
+            newMedia.push({ url, type });
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert(`Error uploading ${file.name}: ${error}`);
         }
     }
     setEditingItem({ ...editingItem, gallery: [...(editingItem.gallery || []), ...newMedia] });
