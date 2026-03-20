@@ -39,7 +39,7 @@ export const addItem = async (colName: string, item: any) => {
     if (colName !== 'appointments' && !auth.currentUser) throw new Error("Nicht autorisierter Zugriff: Bitte melden Sie sich zuerst an.");
     
     const docId = item.id ? item.id.toString() : Date.now().toString();
-    const itemToSave = { ...item, id: item.id || parseInt(docId) }; 
+    const itemToSave = JSON.parse(JSON.stringify({ ...item, id: item.id || parseInt(docId) })); 
     await setDoc(doc(db, colName, docId), itemToSave, { merge: true });
 };
 

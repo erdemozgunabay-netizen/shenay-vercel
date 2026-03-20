@@ -2,6 +2,45 @@ import React, { useState } from 'react';
 import { TranslationStructure, Service, Product, BlogPost, ReturnRequest, Appointment, GalleryItem, SiteConfig, Testimonial, TeamMember } from '../types';
 import { Star, ShoppingBag, Calendar, Clock, Instagram, Mail, ArrowRight, User, Package, Phone, RefreshCw, ChevronLeft, Image, Share2, ZoomIn, MapPin, X, Quote, Play } from 'lucide-react';
 
+// --- Video Player Component ---
+const VideoPlayer: React.FC<{ url: string; className?: string; autoPlay?: boolean }> = ({ url, className, autoPlay }) => {
+    const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+    const isVimeo = url.includes('vimeo.com');
+
+    if (isYouTube) {
+        let videoId = '';
+        if (url.includes('v=')) {
+            videoId = url.split('v=')[1].split('&')[0];
+        } else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1].split('?')[0];
+        }
+        return (
+            <iframe
+                src={`https://www.youtube.com/embed/${videoId}${autoPlay ? '?autoplay=1' : ''}`}
+                className={className}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            />
+        );
+    }
+
+    if (isVimeo) {
+        const videoId = url.split('vimeo.com/')[1].split('?')[0];
+        return (
+            <iframe
+                src={`https://player.vimeo.com/video/${videoId}${autoPlay ? '?autoplay=1' : ''}`}
+                className={className}
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+            />
+        );
+    }
+
+    return <video src={url} controls autoPlay={autoPlay} className={className} />;
+};
+
 // --- Services Component ---
 interface ServicesProps {
   t: TranslationStructure['sections'];
@@ -152,7 +191,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({ t, service, onBack
                                                 {item.type === 'image' ? (
                                                     <img src={item.url} alt={t.galleryAlt} className="w-full h-full object-cover hover:scale-105 transition duration-500" />
                                                 ) : (
-                                                    <video src={item.url} controls className="w-full h-full object-cover" />
+                                                    <VideoPlayer url={item.url} className="w-full h-full object-cover" />
                                                 )}
                                             </div>
                                         ))}
@@ -307,7 +346,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ t, product, onBack
                             {activeType === 'image' ? (
                                 <img src={activeMedia} alt={product.name} className="w-full h-full object-cover" />
                             ) : (
-                                <video src={activeMedia} controls autoPlay className="w-full h-full object-cover" />
+                                <VideoPlayer url={activeMedia} autoPlay className="w-full h-full object-cover" />
                             )}
                             {product.stock === 0 && (
                                 <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">

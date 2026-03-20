@@ -133,8 +133,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
 
   const handleGalleryMediaUpload = async (files: FileList, type: 'image' | 'video') => {
     const newMedia = [];
+    const MAX_FILE_SIZE = 800 * 1024; // 800KB limit to stay under Firestore 1MB document limit
+    
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`File "${file.name}" is too large. Firestore limit is 1MB total per document. Please use a smaller file or a video URL.`);
+            continue;
+        }
+
         if (type === 'image') {
             const b64 = await resizeImage(file);
             newMedia.push({ url: b64, type: 'image' });
@@ -148,6 +156,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
         }
     }
     setEditingItem({ ...editingItem, gallery: [...(editingItem.gallery || []), ...newMedia] });
+  };
+
+  const addVideoByUrl = (url: string) => {
+    if (!url) return;
+    setEditingItem({ ...editingItem, gallery: [...(editingItem.gallery || []), { url, type: 'video' }] });
   };
 
   const removeGalleryItem = (index: number) => {
@@ -377,10 +390,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                                   <input type="file" accept="video/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'video')} />
                               </label>
                           </div>
+                          <div className="mt-2 flex gap-2">
+                              <input 
+                                  type="text" 
+                                  className="flex-1 p-2 border rounded-lg text-xs bg-white text-gray-900 border-gray-300" 
+                                  placeholder="Video URL (YouTube/Vimeo/Direct)..." 
+                                  onKeyDown={(e: any) => {
+                                      if (e.key === 'Enter') {
+                                          addVideoByUrl(e.target.value);
+                                          e.target.value = '';
+                                      }
+                                  }}
+                              />
+                          </div>
                       </div>
                   </>
-              )}
-              {editType === 'product' && (
+              )
+          }
+          {editType === 'product' && (
                   <>
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.tabs.products} value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} />
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.amount} (${t.pricePlaceholder})`} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} />
@@ -418,10 +445,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
                                   <input type="file" accept="video/*" multiple className="hidden" onChange={(e) => e.target.files && handleGalleryMediaUpload(e.target.files, 'video')} />
                               </label>
                           </div>
+                          <div className="mt-2 flex gap-2">
+                              <input 
+                                  type="text" 
+                                  className="flex-1 p-2 border rounded-lg text-xs bg-white text-gray-900 border-gray-300" 
+                                  placeholder="Video URL (YouTube/Vimeo/Direct)..." 
+                                  onKeyDown={(e: any) => {
+                                      if (e.key === 'Enter') {
+                                          addVideoByUrl(e.target.value);
+                                          e.target.value = '';
+                                      }
+                                  }}
+                              />
+                          </div>
                       </div>
                   </>
-              )}
-              {editType === 'blog' && (
+              )
+          }
+          {editType === 'blog' && (
                   <>
                       <input type="date" className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" value={editingItem.date} onChange={e => setEditingItem({...editingItem, date: e.target.value})} />
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.titleLabel} value={editingItem.title} onChange={e => setEditingItem({...editingItem, title: e.target.value})} />
