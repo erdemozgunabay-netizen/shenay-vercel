@@ -340,7 +340,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               {editType === 'service' && (
                   <>
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.service} value={editingItem.title} onChange={e => setEditingItem({...editingItem, title: e.target.value})} />
-                      <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.amount} (${t.sections.other})`} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} />
+                      <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.amount} (${t.other})`} value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} />
                       <textarea className="w-full p-3 border rounded-lg h-32 bg-white text-gray-900 border-gray-300" placeholder={t.description} value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
                       
                       <div className="pt-4 border-t border-gray-100">
@@ -395,7 +395,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               {editType === 'gallery' && (
                   <>
                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.category} value={editingItem.category} onChange={e => setEditingItem({...editingItem, category: e.target.value})} />
-                      <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.titleLabel} / ${t.description} (${t.sections.other})`} value={editingItem.caption} onChange={e => setEditingItem({...editingItem, caption: e.target.value})} />
+                      <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.titleLabel} / ${t.description} (${t.other})`} value={editingItem.caption} onChange={e => setEditingItem({...editingItem, caption: e.target.value})} />
                   </>
               )}
               {editType === 'testimonial' && (
@@ -416,7 +416,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ t, siteConfig, s
               {editType === 'banner' && (
                   <>
                        <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={t.titleLabel} value={editingItem.title} onChange={e => setEditingItem({...editingItem, title: e.target.value})} />
-                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.link} (${t.sections.other})`} value={editingItem.link} onChange={e => setEditingItem({...editingItem, link: e.target.value})} />
+                       <input className="w-full p-3 border rounded-lg bg-white text-gray-900 border-gray-300" placeholder={`${t.link} (${t.other})`} value={editingItem.link} onChange={e => setEditingItem({...editingItem, link: e.target.value})} />
                   </>
               )}
           </div>

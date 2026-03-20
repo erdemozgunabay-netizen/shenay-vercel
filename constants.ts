@@ -185,7 +185,8 @@ export const TRANSLATIONS: Translations = {
       pricePlaceholder: "e.g. €25.00",
       ratingPlaceholder: "(1-5)",
       currencySymbol: "€",
-      vatSymbol: "%"
+      vatSymbol: "%",
+      other: "Other"
     },
     sections: {
       servicesTitle: "Exclusive Services",
@@ -487,7 +488,8 @@ export const TRANSLATIONS: Translations = {
       pricePlaceholder: "Örn: €25.00",
       ratingPlaceholder: "(1-5)",
       currencySymbol: "€",
-      vatSymbol: "%"
+      vatSymbol: "%",
+      other: "Diğer"
     },
     sections: {
       servicesTitle: "Hizmetlerimiz",
@@ -789,7 +791,8 @@ export const TRANSLATIONS: Translations = {
       pricePlaceholder: "z.B. €25.00",
       ratingPlaceholder: "(1-5)",
       currencySymbol: "€",
-      vatSymbol: "%"
+      vatSymbol: "%",
+      other: "Sonstiges"
     },
     sections: {
       servicesTitle: "Dienstleistungen",

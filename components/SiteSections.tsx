@@ -385,10 +385,10 @@ export const BookingSection: React.FC<BookingProps> = ({ t, onBook }) => {
           </div>
           
           <div>
-              <label className="block text-xs uppercase font-bold text-gray-500 mb-2">{t.sections.notesLabel}</label>
+              <label className="block text-xs uppercase font-bold text-gray-500 mb-2">{t.notesLabel}</label>
               <textarea 
                  className="w-full p-4 bg-gray-50 rounded-xl border-gray-200 h-24 resize-none focus:border-brand-gold focus:bg-white transition outline-none"
-                 placeholder={t.sections.notesPlaceholder}
+                 placeholder={t.notesPlaceholder}
                  value={formData.notes}
                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
               />

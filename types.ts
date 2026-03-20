@@ -175,6 +175,7 @@ export interface TranslationStructure {
     ratingPlaceholder: string;
     currencySymbol: string;
     vatSymbol: string;
+    other: string;
   };
   sections: {
     servicesTitle: string;
