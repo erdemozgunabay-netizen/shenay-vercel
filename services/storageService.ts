@@ -1,8 +1,7 @@
 import { SiteConfig, FirestoreSettings, Order, Service, Product, BlogPost, Invoice, GalleryItem, Appointment, Testimonial, TeamMember, AdBanner } from '../types';
-import { ref as dbRef, set, onValue } from 'firebase/database';
+import { ref, set, onValue } from 'firebase/database';
 import { doc, setDoc, onSnapshot, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, rtdb, auth, storage } from '../firebase'; 
+import { db, rtdb, auth } from '../firebase'; 
 
 const LOCAL_STORAGE_KEY = 'shenay_site_config_v9';
 
@@ -59,13 +58,6 @@ export const saveSettingsToFirestore = async (settings: FirestoreSettings) => {
 export const storageService = {
   saveSettingsToFirestore,
   
-  uploadFile: async (file: File): Promise<string> => {
-    if (!auth.currentUser) throw new Error("Nicht autorisierter Zugriff.");
-    const sRef = storageRef(storage, `media/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(sRef, file);
-    return await getDownloadURL(snapshot.ref);
-  },
-
   subscribeToSettings: (onUpdate: (s: FirestoreSettings | null) => void) => {
       return onSnapshot(doc(db, "settings", "global"), (snap) => {
           onUpdate(snap.exists() ? snap.data() as FirestoreSettings : null);

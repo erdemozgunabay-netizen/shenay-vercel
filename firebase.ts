@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
-import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCSK6o0MxAqqgVyNhAwc7i_u5ncl9TqoYE",
@@ -22,7 +21,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
-export const storage = getStorage(app);
 
 // Enable persistence for mobile browsers
 setPersistence(auth, browserLocalPersistence).catch((error) => {
